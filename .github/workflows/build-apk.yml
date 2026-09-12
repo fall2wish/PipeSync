@@ -148,11 +148,12 @@ jobs:
         shell: pwsh
         run: |
           cmake -B build-win -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-win --config Release
+          cmake --build build-win --config Release --target rclone PipeSyncTray
 
       - name: Compile Standalone Windows Daemon Executable
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path "build-win/Release"
           dart compile exe dart/bin/pipesync.dart -o build-win/Release/pipesync.exe
 
       - name: Package Windows Client Distribution

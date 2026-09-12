@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <shellapi.h>
+#include <wchar.h>
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -155,7 +156,7 @@ void StopDaemonProcess(void) {
  * 更新托盘悬浮提示文字
  */
 void UpdateTrayTooltip(const wchar_t *statusText) {
-    g_nid.uFlags = NIF_TIP | NIF_INFO;
+    g_nid.uFlags = NIF_TIP;
     lstrcpynW(g_nid.szTip, statusText, sizeof(g_nid.szTip) / sizeof(wchar_t));
     Shell_NotifyIconW(NIM_MODIFY, &g_nid);
 }
@@ -369,4 +370,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         CloseHandle(hMutex);
     }
     return (int)msg.wParam;
+}
+
+/**
+ * 标准 WinMain 入口点 (兼容部分默认寻找 WinMain 的 MSVC CRT 链接器)
+ */
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    (void)lpCmdLine;
+    return wWinMain(hInstance, hPrevInstance, GetCommandLineW(), nCmdShow);
 }

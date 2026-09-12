@@ -1,4 +1,8 @@
+#ifdef __GNUC__
 #include <windows.h>
+#else
+#include <winresrc.h>
+#endif
 
 1 VERSIONINFO
 FILEVERSION 1,0,0,0

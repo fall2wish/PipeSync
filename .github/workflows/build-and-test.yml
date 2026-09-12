@@ -1,0 +1,67 @@
+name: PipeSync CI & Build Workflow
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build Native Engine & Execute Full Verification Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make build-essential
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Compile Native C-Shared Libraries & Standalone Executable
+        run: |
+          make compile
+
+      - name: Execute Native C FFI Tests
+        run: |
+          make test-native
+
+      - name: Execute 2PC Verify & Purge Python Test Suite
+        run: |
+          make test-python
+
+      - name: Execute Dart 3.x Native Test Suite
+        run: |
+          make test-dart
+
+      - name: Execute Android Embedded WebKit Integration Tests
+        run: |
+          make test-android
+
+      - name: Upload Native Shared Library Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipesync-linux-x86_64
+          path: |
+            build/pipesync
+            native/librclone.so
+            native/libpipesync_quickjs.so
+          if-no-files-found: error

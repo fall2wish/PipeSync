@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PipeSync</string>
+    <string name="channel_name">PipeSync 管道传输服务</string>
+    <string name="channel_description">维持后台 2PC 传输引擎与数据同步，避免系统清理休眠</string>
+    <string name="notification_title">PipeSync 正在运行</string>
+    <string name="notification_content">数据管道引擎与 WebKit 宿主已就绪</string>
+    <string name="storage_permission_rational">PipeSync 需要“所有文件访问权限”以进行双向文件原子同步与 MediaStore 校验</string>
+</resources>

@@ -1,0 +1,255 @@
+name: Build & Publish PipeSync Multiplatform Releases
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0, leave blank for auto-number)'
+        required: false
+        default: ''
+      prerelease:
+        description: 'Mark as Pre-release'
+        type: boolean
+        required: false
+        default: false
+      draft:
+        description: 'Mark as Draft'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Job 1: Determine Release Tag
+  # ─────────────────────────────────────────────────────────────
+  init-release:
+    name: Initialize Release Version Tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag_step.outputs.tag }}
+    steps:
+      - id: tag_step
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="v1.0.${{ github.run_number }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Release tag initialized: $TAG"
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 2: Build Android APK & Linux Binary
+  # ─────────────────────────────────────────────────────────────
+  build-android-and-linux:
+    name: Build Android APK (WebKit) & Linux Binaries
+    needs: init-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Compile Native C-Shared Libraries & Sync jniLibs
+        run: |
+          make compile
+          ls -la android/app/src/main/jniLibs/x86_64/
+          ls -la android/app/src/main/jniLibs/arm64-v8a/
+
+      - name: Build Android Release APK
+        working-directory: ./android
+        run: |
+          chmod +x gradlew
+          if command -v gradle >/dev/null 2>&1; then
+            gradle assembleRelease --stacktrace
+          else
+            ./gradlew assembleRelease --stacktrace
+          fi
+
+      - name: Organize Android and Linux Distribution Assets
+        run: |
+          TAG="${{ needs.init-release.outputs.tag }}"
+          mkdir -p dist-linux-android
+
+          # Android APK
+          APK_SRC=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -n "$APK_SRC" ]; then
+            cp "$APK_SRC" "dist-linux-android/PipeSync-${TAG}-android.apk"
+          fi
+
+          # Linux Executable & Native Libraries
+          if [ -f "build/pipesync" ]; then
+            cp "build/pipesync" "dist-linux-android/pipesync-linux-x86_64"
+          fi
+          if [ -f "native/librclone.so" ]; then
+            cp "native/librclone.so" "dist-linux-android/librclone.so"
+          fi
+          if [ -f "native/libpipesync_quickjs.so" ]; then
+            cp "native/libpipesync_quickjs.so" "dist-linux-android/libpipesync_quickjs.so"
+          fi
+
+      - name: Upload Android & Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-linux-android
+          path: dist-linux-android/*
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 3: Build Windows Client & System Tray App
+  # ─────────────────────────────────────────────────────────────
+  build-windows-client:
+    name: Build Windows Client (System Tray & Service Host)
+    needs: init-release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Compile Native C Libraries & Win32 System Tray Host via CMake
+        shell: pwsh
+        run: |
+          cmake -B build-win -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-win --config Release
+
+      - name: Compile Standalone Windows Daemon Executable
+        shell: pwsh
+        run: |
+          dart compile exe dart/bin/pipesync.dart -o build-win/Release/pipesync.exe
+
+      - name: Package Windows Client Distribution
+        shell: pwsh
+        run: |
+          $TAG = "${{ needs.init-release.outputs.tag }}"
+          New-Item -ItemType Directory -Force -Path "dist-windows"
+          New-Item -ItemType Directory -Force -Path "package-win"
+
+          # Copy components to packaging directory
+          Copy-Item -Path "build-win/Release/PipeSyncTray.exe" -Destination "package-win/"
+          Copy-Item -Path "build-win/Release/pipesync.exe" -Destination "package-win/"
+          Copy-Item -Path "build-win/Release/librclone.dll" -Destination "package-win/"
+          if (Test-Path "build-win/Release/libpipesync_quickjs.dll") {
+            Copy-Item -Path "build-win/Release/libpipesync_quickjs.dll" -Destination "package-win/"
+          }
+          Copy-Item -Path "windows/README-Windows.txt" -Destination "package-win/"
+
+          # Create ZIP Archive for distribution
+          $ZipName = "PipeSync-$TAG-windows-x64.zip"
+          Compress-Archive -Path "package-win/*" -DestinationPath "dist-windows/$ZipName" -Force
+
+          # Also expose standalone Tray executable directly
+          Copy-Item -Path "build-win/Release/PipeSyncTray.exe" -Destination "dist-windows/"
+          Copy-Item -Path "build-win/Release/librclone.dll" -Destination "dist-windows/"
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: dist-windows/*
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────────
+  # Job 4: Publish All-in-One Release to GitHub
+  # ─────────────────────────────────────────────────────────────
+  publish-github-release:
+    name: Publish Multiplatform Release to GitHub
+    needs: [init-release, build-android-and-linux, build-windows-client]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Linux & Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-linux-android
+          path: release-assets/
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-windows
+          path: release-assets/
+
+      - name: Generate Checksums & Prepare Release Notes
+        id: checksums
+        run: |
+          cd release-assets/
+          sha256sum * > "PipeSync-${{ needs.init-release.outputs.tag }}-checksums.sha256"
+          cat "PipeSync-${{ needs.init-release.outputs.tag }}-checksums.sha256"
+
+      - name: Publish Release via softprops/action-gh-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.init-release.outputs.tag }}
+          name: "PipeSync Release ${{ needs.init-release.outputs.tag }}"
+          body: |
+            ## PipeSync 移动端与桌面跨平台数据管道系统 (${{ needs.init-release.outputs.tag }})
+
+            ### 🪟 Windows 桌面客户端 (托盘驻留 & 开机自启)
+            - **右下角系统托盘常驻 (`PipeSyncTray.exe`)**：静默托管后台同步服务，无黑框命令行干扰。
+            - **服务状态实时可视化**：右键即时查看运行状态、端口绑定及守护进程心跳。
+            - **开机自动启动一键设置**：右键菜单直接勾选或取消开机自启（通过 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 注册表安全写入）。
+            - **极速打开管理控制台**：双击托盘图标即刻在默认浏览器中调起类似 Syncthing 的高保真 Web 控制台 (`http://127.0.0.1:8384`)。
+            - **分发格式**：`PipeSync-${{ needs.init-release.outputs.tag }}-windows-x64.zip`（内含托盘程序、守护进程与 C-Shared 运行时）。
+
+            ### 📱 Android 移动端原生客户端 (内嵌 WebKit)
+            - **自带内嵌 WebKit 管理控制台**：提供与 Syncthing-Android 一致的内嵌 WebView 界面，开箱即用。
+            - **底层存储直连**：`MANAGE_EXTERNAL_STORAGE` 直通 POSIX 接口，规避 Scoped Storage 限制。
+            - **媒体库幽灵缩略图消除**：2PC 归档清理（PURGE）物理删除后自动驱动 `MediaScannerConnection` 净化系统相册。
+            - **Android 14/15 6小时前台服务接力保活**：`FOREGROUND_SERVICE_TYPE_DATA_SYNC` 具备 5.5 小时 WorkManager 定时分段接力。
+            - **分发格式**：`PipeSync-${{ needs.init-release.outputs.tag }}-android.apk`（支持 `arm64-v8a` 与 `x86_64`）。
+
+            ### 🐧 Linux 跨平台服务端
+            - **`pipesync-linux-x86_64`**：独立高性能二进制，无外部依赖。
+            - **`librclone.so` & `libpipesync_quickjs.so`**：纯 C 编译的进程内零拷贝 RPC 引擎与 16MB 隔离沙盒。
+
+            ---
+            ### 🔐 完整性校验清单 (SHA-256)
+            ```text
+            详见附件中的 PipeSync-${{ needs.init-release.outputs.tag }}-checksums.sha256
+            ```
+          files: release-assets/*
+          draft: ${{ inputs.draft == true }}
+          prerelease: ${{ inputs.prerelease == true }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

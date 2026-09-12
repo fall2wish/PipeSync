@@ -1,0 +1,21 @@
+{
+  "id": "org.pipesync.media-cleaner",
+  "name": "Media Cleaner and Date Sorter",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Filters out temporary and hidden files, organizing media into YYYY-MM-DD directories.",
+  "author": {
+    "name": "PipeSync Core Team",
+    "url": "https://pipesync.io"
+  },
+  "permissions": [
+    "READ_METADATA",
+    "TRANSFORM_PATH"
+  ],
+  "entrypoints": {
+    "hookScript": "hooks.js"
+  },
+  "integrity": {
+    "hookScriptSha256": "e0d59cee075528c60c26dc98f42741eb82c8ce4f48d48b54d7af7db5afda063d"
+  }
+}

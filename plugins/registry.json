@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "id": "org.pipesync.media-cleaner",
+      "enabled": true,
+      "installedPath": "installed/org.pipesync.media-cleaner",
+      "installedAt": "2026-09-11T10:00:00Z"
+    }
+  ]
+}

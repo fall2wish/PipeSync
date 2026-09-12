@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Standard Gradle Wrapper Script
+set -e
+
+DIRNAME="$(cd "$(dirname "$0")" && pwd)"
+APP_BASE_NAME="$(basename "$0")"
+CLASSPATH="$DIRNAME/gradle/wrapper/gradle-wrapper.jar"
+
+# Check if gradle is already in PATH
+if command -v gradle >/dev/null 2>&1; then
+    exec gradle "$@"
+fi
+
+# Locate Java
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+if ! command -v "$JAVACMD" >/dev/null 2>&1; then
+    echo "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH." >&2
+    exit 1
+fi
+
+# If wrapper jar doesn't exist yet, download or invoke wrapper
+if [ ! -f "$CLASSPATH" ]; then
+    echo "Downloading Gradle Wrapper Jar..."
+    mkdir -p "$DIRNAME/gradle/wrapper"
+    curl -sLo "$CLASSPATH" https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar || true
+fi
+
+if [ -f "$CLASSPATH" ]; then
+    exec "$JAVACMD" -Dorg.gradle.appname="$APP_BASE_NAME" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+else
+    echo "ERROR: Gradle wrapper jar could not be found or downloaded. Please install Gradle." >&2
+    exit 1
+fi

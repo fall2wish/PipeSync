@@ -1,0 +1,959 @@
+// lib/web/syncthing_gui.dart
+
+String renderSyncthingHtml({required String nodeId, required String platform}) {
+  return '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PipeSync - 数据管道管理控制台</title>
+  <style>
+    :root {
+      --bg-primary: #121820;
+      --bg-card: #1b222c;
+      --bg-card-hover: #222b37;
+      --bg-subtle: #242e3b;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #2d3748;
+      --primary: #06b6d4;
+      --primary-hover: #0891b2;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    /* Navbar */
+    .navbar {
+      background-color: #0f172a;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    .brand-badge {
+      font-size: 11px;
+      background: var(--bg-subtle);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      color: var(--success);
+      font-weight: 500;
+      font-size: 13px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: #4a5568;
+    }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #042f2e;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    /* Summary bar */
+    .summary-bar {
+      background: #151d27;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      gap: 32px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .metric-item span {
+      color: var(--text-main);
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    /* Main Layout */
+    .main-container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .main-container { grid-template-columns: 1fr; }
+    }
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .column-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    /* Card Styles */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .card:hover {
+      border-color: #3f4d62;
+    }
+    .card-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-card);
+    }
+    .card-header:hover {
+      background: var(--bg-card-hover);
+    }
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .folder-icon {
+      color: var(--primary);
+    }
+    .card-label {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-syncing { background: rgba(6, 182, 212, 0.2); color: #22d3ee; }
+    .badge-paused { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .card-body {
+      padding: 16px 18px;
+      border-top: 1px solid var(--border);
+      background: #161d26;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      row-gap: 8px;
+      font-size: 13px;
+    }
+    .info-label {
+      color: var(--text-muted);
+    }
+    .info-value {
+      color: var(--text-main);
+      word-break: break-all;
+    }
+    .progress-bar-container {
+      margin: 12px 0;
+      background: var(--bg-subtle);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #06b6d4, #3b82f6);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .card-actions {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    /* 2PC Logs Section */
+    .logs-panel {
+      max-width: 1400px;
+      margin: 0 auto 32px auto;
+      padding: 0 24px;
+    }
+    .logs-table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-container {
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th {
+      background: #0f172a;
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid #232d3b;
+      font-family: monospace;
+    }
+    tr:hover td {
+      background: var(--bg-subtle);
+    }
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 600px;
+      max-width: 90vw;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+    .modal-body {
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #151d27;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      background: #111822;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+    textarea.form-control {
+      font-family: monospace;
+      resize: vertical;
+      min-height: 100px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-logo">PS</div>
+      <div class="brand-title">PipeSync</div>
+      <div class="brand-badge">2PC Zero-Loss</div>
+      <div class="brand-badge" id="platformBadge">$platform</div>
+    </div>
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      <span id="globalStateText">All Folders Up to Date</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn" onclick="openCopilotModal()">🤖 Copilot AI</button>
+      <button class="btn" onclick="triggerSyncAll()">⟳ 立即同步全部</button>
+      <button class="btn" onclick="openSettingsModal()">⚙ 设置</button>
+    </div>
+  </nav>
+
+  <!-- Summary Metric Bar -->
+  <div class="summary-bar">
+    <div class="metric-item">本设备 ID: <span id="nodeIdDisplay">$nodeId</span></div>
+    <div class="metric-item">下行 / 上行: <span id="bandwidthDisplay">0 B/s / 0 B/s</span></div>
+    <div class="metric-item">2PC 校验安全清除: <span id="purgedFilesDisplay">0 项 (100% SHA-256 匹配)</span></div>
+    <div class="metric-item">WAL 事务状态: <span id="walStatusDisplay">READY (WAL Enabled)</span></div>
+  </div>
+
+  <!-- Android Native WebKit Status Banner -->
+  <div id="androidNoticeBanner" style="display: none; margin: 16px 24px 0 24px; padding: 12px 18px; border-radius: 8px; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 24px;">🤖</span>
+      <div>
+        <div style="font-weight: 600; color: #38bdf8;" id="androidBannerTitle">Android 原生 WebKit 宿主已连接</div>
+        <div style="font-size: 12px; color: var(--text-muted);" id="androidBannerDesc">MediaScanner 自动清理已激活，后台保活接力中</div>
+      </div>
+    </div>
+    <div id="androidActionButtons" style="display: flex; gap: 10px;"></div>
+  </div>
+
+  <!-- Main 2-Column Syncthing Layout -->
+  <main class="main-container">
+    <!-- Left Column: Folders -->
+    <section>
+      <div class="column-header">
+        <div class="column-title">
+          📁 同步文件夹 (Folders)
+          <span class="card-sub" id="folderCount">(0)</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddFolderModal()">+ 添加文件夹</button>
+      </div>
+      <div id="folderList">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- Right Column: Devices -->
+    <section>
+      <div class="column-header">
+        <div class="column-title">
+          💻 关联设备与远端 (Devices & Remotes)
+          <span class="card-sub" id="deviceCount">(1)</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddDeviceModal()">+ 添加远端设备</button>
+      </div>
+      <div id="deviceList">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom: 2PC Transaction Log / Audit Trail -->
+  <section class="logs-panel">
+    <div class="column-header">
+      <div class="column-title">
+        🛡 强一致性两阶段提交审计日志 (2PC Verification & Purge Audit Trail)
+      </div>
+      <button class="btn btn-sm" onclick="refreshTasks()">刷新记录</button>
+    </div>
+    <div class="logs-table-card">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>任务 ID</th>
+              <th>阶段 (Stage)</th>
+              <th>源路径 (Local)</th>
+              <th>目标路径 (Target)</th>
+              <th>Local SHA-256</th>
+              <th>Remote SHA-256</th>
+              <th>更新时间</th>
+            </tr>
+          </thead>
+          <tbody id="taskLogBody">
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">暂无历史事务日志</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Folder Modal -->
+  <div class="modal-overlay" id="addFolderModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>添加同步文件夹</div>
+        <button class="btn btn-sm" onclick="closeModal('addFolderModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>文件夹标签 (Folder Label)</label>
+          <input type="text" class="form-control" id="newFolderLabel" placeholder="如: 手机录音目录 / Recordings">
+        </div>
+        <div class="form-group">
+          <label>文件夹路径 (Folder Path)</label>
+          <input type="text" class="form-control" id="newFolderPath" placeholder="如: /sdcard/Recordings 或 /mnt/e/code/PipeSync/recordings">
+          <!-- Android 常用路径快速预设 -->
+          <div id="androidQuickPaths" style="display: none; margin-top: 6px; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-sm" onclick="setFolderPath('/storage/emulated/0/DCIM/Camera', '手机相机照片')">📷 相机照片</button>
+            <button type="button" class="btn btn-sm" onclick="setFolderPath('/storage/emulated/0/Pictures', '手机图库')">🖼️ 图片目录</button>
+            <button type="button" class="btn btn-sm" onclick="setFolderPath('/storage/emulated/0/Documents', '我的文档')">📄 文档目录</button>
+            <button type="button" class="btn btn-sm" onclick="setFolderPath('/storage/emulated/0/Download', '手机下载')">📥 下载目录</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>同步模式 (Pipeline Mode)</label>
+          <select class="form-control" id="newFolderMode">
+            <option value="2pc_purge">2PC Verify & Purge (强一致性校验后清除源文件 - 归档推荐)</option>
+            <option value="send_only">Send Only (单向备份传输，保留手机本地源文件)</option>
+            <option value="desktop_pull">Desktop Pull (反向拉取模式 - 适配 iOS/受限局域网)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>目标远端设备 (Target Remote)</label>
+          <select class="form-control" id="newFolderRemote">
+            <!-- Dynamically populated from devices -->
+          </select>
+        </div>
+        <div class="form-group">
+          <label>前置 QuickJS 插件与过滤规则</label>
+          <select class="form-control" id="newFolderPlugin">
+            <option value="org.pipesync.media-cleaner">Media Cleaner & Sorter (org.pipesync.media-cleaner)</option>
+            <option value="none">无插件 (直接传输)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('addFolderModal')">取消</button>
+        <button class="btn btn-primary" onclick="submitNewFolder()">保存并开始监听</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Device Modal -->
+  <div class="modal-overlay" id="addDeviceModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div>添加远端存储或电脑</div>
+        <button class="btn btn-sm" onclick="closeModal('addDeviceModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>设备 / 远端名称</label>
+          <input type="text" class="form-control" id="newDeviceName" placeholder="如: 办公室电脑 NAS (SMB)">
+        </div>
+        <div class="form-group">
+          <label>协议类型</label>
+          <select class="form-control" id="newDeviceProtocol">
+            <option value="smb">SMB / CIFS (Windows 局域网共享)</option>
+            <option value="webdav">WebDAV (群晖 / Nextcloud / TrueNAS)</option>
+            <option value="sftp">SFTP / SSH</option>
+            <option value="desktop_pull">PipeSync Desktop Pull Node</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>远端目标根目录 / 地址</label>
+          <input type="text" class="form-control" id="newDevicePath" placeholder="如: //192.168.1.100/backup 或 /nas/recordings">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('addDeviceModal')">取消</button>
+        <button class="btn btn-primary" onclick="submitNewDevice()">连接并绑定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Copilot Modal -->
+  <div class="modal-overlay" id="copilotModal">
+    <div class="modal" style="width: 700px;">
+      <div class="modal-header">
+        <div>🤖 PipeSync AI Copilot 规则助手</div>
+        <button class="btn btn-sm" onclick="closeModal('copilotModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>用自然语言描述您的同步与过滤需求</label>
+          <input type="text" class="form-control" id="copilotPrompt" value="按录音日期自动分类到 YYYY-MM 目录，过滤临时文件与小于10KB的文件">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="generateCopilotScript()" style="margin-bottom: 14px;">⚡ 生成 QuickJS 规则脚本</button>
+        <div class="form-group">
+          <label>生成的 IIFE 脚本 (在 QuickJS 沙盒中运行)</label>
+          <textarea class="form-control" id="copilotScriptCode" rows="10"></textarea>
+        </div>
+        <div id="copilotTestResult" style="margin-top: 10px; font-size: 12px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="testCopilotScript()">🧪 在 QuickJS 沙盒中测试运行</button>
+        <button class="btn btn-primary" onclick="applyCopilotScript()">一键绑定到所选文件夹</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let systemState = {};
+    let folders = [];
+    let devices = [];
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/v1/system/status');
+        if (res.ok) {
+          systemState = await res.json();
+          updateSystemUI();
+        }
+      } catch (e) {
+        console.error("Fetch status failed:", e);
+      }
+    }
+
+    async function fetchFolders() {
+      try {
+        const res = await fetch('/api/v1/folders');
+        if (res.ok) {
+          folders = await res.json();
+          renderFolders();
+        }
+      } catch (e) {}
+    }
+
+    async function fetchDevices() {
+      try {
+        const res = await fetch('/api/v1/devices');
+        if (res.ok) {
+          devices = await res.json();
+          renderDevices();
+        }
+      } catch (e) {}
+    }
+
+    async function fetchTasks() {
+      try {
+        const res = await fetch('/api/v1/tasks');
+        if (res.ok) {
+          const tasks = await res.json();
+          renderTasks(tasks);
+        }
+      } catch (e) {}
+    }
+
+    function updateSystemUI() {
+      if (systemState.nodeId) document.getElementById('nodeIdDisplay').innerText = systemState.nodeId;
+      if (systemState.purgedCount !== undefined) {
+        document.getElementById('purgedFilesDisplay').innerText = `\${systemState.purgedCount} 项 (100% SHA-256 匹配)`;
+      }
+      if (systemState.bandwidth) {
+        document.getElementById('bandwidthDisplay').innerText = systemState.bandwidth;
+      }
+      if (systemState.isSyncing) {
+        document.getElementById('globalStateText').innerText = 'Syncing (2PC Verify & Purge In-Progress)';
+        document.querySelector('.status-dot').style.backgroundColor = '#06b6d4';
+      } else {
+        document.getElementById('globalStateText').innerText = 'All Folders Up to Date';
+        document.querySelector('.status-dot').style.backgroundColor = '#10b981';
+      }
+    }
+
+    function renderFolders() {
+      document.getElementById('folderCount').innerText = `(\${folders.length})`;
+      const container = document.getElementById('folderList');
+      if (folders.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted); background: var(--bg-card); border-radius: 8px; border: 1px dashed var(--border);">点击上方 "+ 添加文件夹" 绑定本地同步目录</div>';
+        return;
+      }
+      container.innerHTML = folders.map(f => {
+        const isPaused = f.isPaused;
+        const statusBadge = isPaused 
+          ? '<span class="badge badge-paused">已暂停</span>' 
+          : (f.isSyncing 
+              ? '<span class="badge badge-syncing">同步中 (2PC)</span>' 
+              : '<span class="badge badge-success">最新 (Up to date)</span>');
+
+        const modeText = f.mode === '2pc_purge' 
+          ? '2PC Verify & Purge (双向强哈希匹配后安全物理删除)' 
+          : (f.mode === 'desktop_pull' ? 'Desktop Pull (桌面主动拉取模式)' : 'Send Only (单向备份保留)');
+
+        return `
+          <div class="card" id="folder-\${f.id}">
+            <div class="card-header" onclick="toggleCardBody('\${f.id}')">
+              <div class="card-title-group">
+                <span class="folder-icon">📁</span>
+                <span class="card-label">\${f.label}</span>
+                <span class="card-sub">(\${f.id})</span>
+              </div>
+              <div>\${statusBadge}</div>
+            </div>
+            <div class="card-body" id="body-\${f.id}">
+              <div class="info-grid">
+                <div class="info-label">文件夹路径:</div>
+                <div class="info-value"><code>\${f.path}</code></div>
+                <div class="info-label">同步策略:</div>
+                <div class="info-value">\${modeText}</div>
+                <div class="info-label">目标远端:</div>
+                <div class="info-value"><code>\${f.remoteTarget}</code></div>
+                <div class="info-label">挂载插件:</div>
+                <div class="info-value"><span class="badge badge-success">\${f.plugin}</span></div>
+                <div class="info-label">全局状态:</div>
+                <div class="info-value">\${f.fileCount || 0} 个文件 (\${f.totalSizeFormatted || '0 B'})</div>
+                <div class="info-label">自动监听:</div>
+                <div class="info-value">\${f.autoWatch ? '已启用 FileSystemWatcher' : '仅手动'}</div>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: \${f.progress || 100}%"></div>
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-sm" onclick="rescanFolder('\${f.id}')">⟳ 立即扫描同步</button>
+                <button class="btn btn-sm" onclick="togglePauseFolder('\${f.id}')">\${isPaused ? '▶ 恢复' : '⏸ 暂停'}</button>
+                <button class="btn btn-sm" style="color: var(--danger);" onclick="deleteFolder('\${f.id}')">🗑 移除</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDevices() {
+      document.getElementById('deviceCount').innerText = `(\${devices.length})`;
+      const container = document.getElementById('deviceList');
+      container.innerHTML = devices.map(d => {
+        const isLocal = d.isLocal;
+        const statusBadge = d.connected 
+          ? '<span class="badge badge-success">已连接</span>' 
+          : '<span class="badge badge-paused">未连接 / 离线</span>';
+
+        return `
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <span>\${isLocal ? '💻' : '🌐'}</span>
+                <span class="card-label">\${d.name} \${isLocal ? '(本设备)' : ''}</span>
+              </div>
+              <div>\${statusBadge}</div>
+            </div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="info-label">设备地址:</div>
+                <div class="info-value"><code>\${d.address}</code></div>
+                <div class="info-label">协议类型:</div>
+                <div class="info-value">\${d.protocol.toUpperCase()}</div>
+                <div class="info-label">2PC 校验模式:</div>
+                <div class="info-value">SHA-256 (RFC 6234 CGo / librclone)</div>
+                <div class="info-label">最后活跃:</div>
+                <div class="info-value">\${d.lastSeen || '刚刚'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Also update remote selector in add folder modal
+      const remoteSelect = document.getElementById('newFolderRemote');
+      remoteSelect.innerHTML = devices.filter(d => !d.isLocal).map(d => 
+        `<option value="\${d.address}">\${d.name} (\${d.protocol.toUpperCase()})</option>`
+      ).join('') || '<option value="backup_dir">默认局域网目标 (Default Target)</option>';
+    }
+
+    function renderTasks(tasks) {
+      const tbody = document.getElementById('taskLogBody');
+      if (!tasks || tasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">暂无历史事务日志</td></tr>';
+        return;
+      }
+      tbody.innerHTML = tasks.slice(0, 15).map(t => {
+        let badgeClass = 'badge-success';
+        if (t.stage === 'ISOLATED_ERROR' || t.stage === 'ABORTED') badgeClass = 'badge-error';
+        else if (t.stage === 'TRANSFERRING' || t.stage === 'VERIFYING') badgeClass = 'badge-syncing';
+
+        if (typeof window.PipeSyncNative !== 'undefined' && t.stage === 'PURGED' && t.localPath) {
+          try { window.PipeSyncNative.cleanUpMediaStore(t.localPath); } catch (_) {}
+        }
+
+        return `
+          <tr>
+            <td>\${t.taskId}</td>
+            <td><span class="badge \${badgeClass}">\${t.stage}</span></td>
+            <td title="\${t.localPath}">\${t.localPath.split('/').pop()}</td>
+            <td title="\${t.targetPath}">\${t.targetPath}</td>
+            <td>\${(t.localSha256 || '').substring(0, 8)}...</td>
+            <td>\${(t.remoteSha256 || 'null').substring(0, 8)}...</td>
+            <td>\${t.updatedAt || 'N/A'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleCardBody(id) {
+      const body = document.getElementById(`body-\${id}`);
+      if (body) {
+        body.style.display = body.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openAddFolderModal() { openModal('addFolderModal'); }
+    function openAddDeviceModal() { openModal('addDeviceModal'); }
+    function openCopilotModal() { 
+      openModal('copilotModal'); 
+      if (!document.getElementById('copilotScriptCode').value) {
+        generateCopilotScript();
+      }
+    }
+    function openSettingsModal() {
+      alert("PipeSync 设置:\\n- librclone FFI: 进程内内存 RPC 调度\\n- QuickJS 沙盒配额: 16 MB\\n- 超时熔断: 5000 ms\\n- SQLite WAL: 已启用");
+    }
+
+    async function submitNewFolder() {
+      const label = document.getElementById('newFolderLabel').value.trim();
+      const path = document.getElementById('newFolderPath').value.trim();
+      const mode = document.getElementById('newFolderMode').value;
+      const remote = document.getElementById('newFolderRemote').value;
+      const plugin = document.getElementById('newFolderPlugin').value;
+      if (!label || !path) { alert("请填写文件夹标签和本地路径"); return; }
+
+      await fetch('/api/v1/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, path, mode, remoteTarget: remote, plugin })
+      });
+      closeModal('addFolderModal');
+      fetchFolders();
+    }
+
+    async function submitNewDevice() {
+      const name = document.getElementById('newDeviceName').value.trim();
+      const protocol = document.getElementById('newDeviceProtocol').value;
+      const path = document.getElementById('newDevicePath').value.trim();
+      if (!name || !path) { alert("请填写设备名称和地址"); return; }
+
+      await fetch('/api/v1/devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, protocol, address: path })
+      });
+      closeModal('addDeviceModal');
+      fetchDevices();
+    }
+
+    async function rescanFolder(id) {
+      await fetch(`/api/v1/folders/\${id}/rescan`, { method: 'POST' });
+      fetchFolders();
+      fetchTasks();
+    }
+
+    async function togglePauseFolder(id) {
+      await fetch(`/api/v1/folders/\${id}/pause`, { method: 'POST' });
+      fetchFolders();
+    }
+
+    async function deleteFolder(id) {
+      if (!confirm("确认移除此同步文件夹绑定？（不会删除物理文件）")) return;
+      await fetch(`/api/v1/folders/\${id}`, { method: 'DELETE' });
+      fetchFolders();
+    }
+
+    async function triggerSyncAll() {
+      for (const f of folders) {
+        rescanFolder(f.id);
+      }
+    }
+
+    async function generateCopilotScript() {
+      const prompt = document.getElementById('copilotPrompt').value;
+      const res = await fetch('/api/v1/copilot/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('copilotScriptCode').value = data.script;
+      }
+    }
+
+    async function testCopilotScript() {
+      const script = document.getElementById('copilotScriptCode').value;
+      const res = await fetch('/api/v1/copilot/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ script })
+      });
+      const data = await res.json();
+      const resBox = document.getElementById('copilotTestResult');
+      if (data.success) {
+        resBox.innerHTML = '<span style="color: var(--success);">✓ QuickJS 沙盒语法与执行验证通过！计划处理文件: ' + (data.plan ? data.plan.length : 0) + ' 项</span>';
+      } else {
+        resBox.innerHTML = '<span style="color: var(--danger);">✕ 沙盒运行失败: ' + (data.error || '未知错误') + '</span>';
+      }
+    }
+
+    function setFolderPath(path, defaultLabel) {
+      document.getElementById('newFolderPath').value = path;
+      const labelInput = document.getElementById('newFolderLabel');
+      if (!labelInput.value && defaultLabel) {
+        labelInput.value = defaultLabel;
+      }
+    }
+
+    function checkAndroidNative() {
+      if (typeof window.PipeSyncNative !== 'undefined') {
+        const badge = document.getElementById('platformBadge');
+        if (badge) badge.innerText = 'Android WebKit 宿主';
+
+        const banner = document.getElementById('androidNoticeBanner');
+        const bannerTitle = document.getElementById('androidBannerTitle');
+        const bannerDesc = document.getElementById('androidBannerDesc');
+        const actionBtns = document.getElementById('androidActionButtons');
+        const quickPaths = document.getElementById('androidQuickPaths');
+
+        if (banner) banner.style.display = 'flex';
+        if (quickPaths) quickPaths.style.display = 'flex';
+
+        let hasStorage = false;
+        let isBatteryIgnored = false;
+        try {
+          hasStorage = window.PipeSyncNative.isStoragePermissionGranted();
+          isBatteryIgnored = window.PipeSyncNative.isBatteryOptimizationIgnored();
+        } catch (e) {
+          console.warn("PipeSyncNative check error:", e);
+        }
+
+        let btnsHtml = '';
+        let warnings = [];
+        if (!hasStorage) {
+          warnings.push('尚未授予所有文件访问权限 (MANAGE_EXTERNAL_STORAGE)');
+          btnsHtml += '<button type="button" class="btn btn-sm btn-primary" onclick="window.PipeSyncNative.requestStoragePermission()">📂 立即授权文件管理</button>';
+        }
+        if (!isBatteryIgnored) {
+          warnings.push('未加入电池优化白名单 (系统休眠可能会中断长效后台同步)');
+          btnsHtml += '<button type="button" class="btn btn-sm" onclick="window.PipeSyncNative.requestIgnoreBatteryOptimizations()">🔋 忽略电池优化</button>';
+        }
+
+        if (warnings.length > 0) {
+          banner.style.background = 'rgba(245, 158, 11, 0.15)';
+          banner.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+          bannerTitle.innerText = '⚠️ Android 权限待授权';
+          bannerTitle.style.color = '#fbbf24';
+          bannerDesc.innerText = warnings.join('；');
+        } else {
+          banner.style.background = 'rgba(16, 185, 129, 0.1)';
+          banner.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          bannerTitle.innerText = '✓ Android 运行环境就绪';
+          bannerTitle.style.color = '#34d399';
+          bannerDesc.innerText = '已获得 MANAGE_EXTERNAL_STORAGE 权限与电池优化豁免，后台数据管道全速运转中';
+        }
+        if (actionBtns) actionBtns.innerHTML = btnsHtml;
+      }
+    }
+
+    // Polling loop every 2 seconds
+    fetchStatus();
+    fetchFolders();
+    fetchDevices();
+    fetchTasks();
+    checkAndroidNative();
+    setInterval(() => {
+      fetchStatus();
+      fetchTasks();
+      checkAndroidNative();
+    }, 2000);
+  </script>
+</body>
+</html>
+''';
+}

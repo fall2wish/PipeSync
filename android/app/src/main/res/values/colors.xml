@@ -1,0 +1,9 @@
+<resources>
+    <color name="primary">#06b6d4</color>
+    <color name="primary_dark">#0891b2</color>
+    <color name="accent">#3b82f6</color>
+    <color name="bg_dark">#121820</color>
+    <color name="bg_card">#1b222c</color>
+    <color name="text_main">#e2e8f0</color>
+    <color name="text_muted">#94a3b8</color>
+</resources>

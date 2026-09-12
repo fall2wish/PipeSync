@@ -299,7 +299,7 @@ object NativeDaemonManager {
                     }
                 }
 
-                // 8. Dynamic Web Console Hot-Update Endpoint
+                // 9. Dynamic Web Console Hot-Update Endpoint
                 (method == "POST" && path == "/api/v1/web/update") -> {
                     try {
                         val webDir = File(context.filesDir, "web")
@@ -308,6 +308,52 @@ object NativeDaemonManager {
                         sendJsonResponse(output, 200, """{"success":true,"bytes":${body.length}}""")
                     } catch (e: Exception) {
                         sendJsonResponse(output, 500, """{"error":"${e.message}"}""")
+                    }
+                }
+
+                // 10. Copilot Workspace Inspection (Strict Security Boundary Enforcement)
+                (method == "GET" && path == "/api/v1/copilot/workspace-files") -> {
+                    val requestedPath = queryParams["path"] ?: ""
+                    
+                    var isAuthorized = false
+                    var matchedFolderLabel = ""
+                    synchronized(foldersList) {
+                        for (f in foldersList) {
+                            val allowedPath = File(f.optString("path")).canonicalPath
+                            if (requestedPath.isNotEmpty()) {
+                                val target = File(requestedPath).canonicalPath
+                                if (target == allowedPath || target.startsWith(allowedPath + File.separator)) {
+                                    isAuthorized = true
+                                    matchedFolderLabel = f.optString("label")
+                                    break
+                                }
+                            }
+                        }
+                    }
+
+                    if (!isAuthorized || requestedPath.isEmpty()) {
+                        sendJsonResponse(output, 403, """{"error":"Forbidden: Path is outside the authorized sync folders. AI is strictly restricted to designated workspaces."}""")
+                    } else {
+                        val dir = File(requestedPath)
+                        val sampleFiles = JSONArray()
+                        if (dir.exists() && dir.isDirectory) {
+                            dir.listFiles()?.filter { !it.name.startsWith(".") }?.take(30)?.forEach { f ->
+                                sampleFiles.put(JSONObject().apply {
+                                    put("name", f.name)
+                                    put("size", f.length())
+                                    put("ext", if (f.name.contains(".")) "." + f.name.substringAfterLast(".") else "")
+                                    put("isDirectory", f.isDirectory)
+                                    put("modTime", f.lastModified())
+                                })
+                            }
+                        }
+                        val resp = JSONObject().apply {
+                            put("workspace", requestedPath)
+                            put("folderLabel", matchedFolderLabel)
+                            put("authorized", true)
+                            put("sampleFiles", sampleFiles)
+                        }
+                        sendJsonResponse(output, 200, resp.toString())
                     }
                 }
 

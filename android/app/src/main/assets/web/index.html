@@ -111,6 +111,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
       transition: all 0.2s;
     }
     .btn:hover {
@@ -155,7 +156,35 @@
       gap: 24px;
     }
     @media (max-width: 900px) {
-      .main-container { grid-template-columns: 1fr; }
+      .main-container { grid-template-columns: 1fr; padding: 0 14px; }
+      .navbar {
+        flex-wrap: wrap;
+        padding: 10px 14px;
+        gap: 8px;
+      }
+      .nav-actions {
+        width: 100%;
+        display: flex;
+        gap: 6px;
+      }
+      .nav-actions .btn {
+        flex: 1;
+        text-align: center;
+        padding: 6px 6px;
+        font-size: 12px;
+      }
+      .brand-badge {
+        display: none;
+      }
+      .summary-bar {
+        grid-template-columns: 1fr 1fr;
+        padding: 10px 14px;
+        gap: 10px;
+      }
+      .modal {
+        width: 96% !important;
+        max-width: 96% !important;
+      }
     }
     .column-header {
       display: flex;
@@ -170,6 +199,171 @@
       align-items: center;
       gap: 8px;
     }
+
+    /* Modal Maximize & Expand */
+    .modal-maximized {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      z-index: 1000 !important;
+    }
+    .modal-maximized .modal-body {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      height: calc(100vh - 125px) !important;
+      max-height: calc(100vh - 125px) !important;
+      overflow: hidden !important;
+      padding: 8px 16px !important;
+    }
+
+    /* Copilot Split Layout */
+    .copilot-split-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+    .modal-maximized .copilot-split-layout {
+      flex: 1 !important;
+      min-height: 0 !important;
+      height: 100% !important;
+    }
+    @media (max-width: 680px) {
+      .copilot-split-layout {
+        grid-template-columns: 1fr;
+      }
+      .copilot-mobile-tabs {
+        display: flex !important;
+      }
+      .copilot-split-layout.tab-chat .copilot-editor-pane {
+        display: none !important;
+      }
+      .copilot-split-layout.tab-editor .copilot-chat-pane {
+        display: none !important;
+      }
+    }
+    .copilot-chat-pane {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #141a23;
+      padding: 12px;
+      min-height: 360px;
+    }
+    .modal-maximized .copilot-chat-pane {
+      min-height: 0 !important;
+      height: 100% !important;
+      flex: 1 !important;
+    }
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .chat-messages-container {
+      flex: 1;
+      min-height: 160px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-maximized .chat-messages-container {
+      max-height: none !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+    }
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 92%;
+      word-break: break-word;
+    }
+    .chat-bubble-user {
+      align-self: flex-end;
+      background: #1e3a8a;
+      color: #eff6ff;
+      border-bottom-right-radius: 2px;
+    }
+    .chat-bubble-ai {
+      align-self: flex-start;
+      background: #1e293b;
+      color: #f1f5f9;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 2px;
+    }
+    .chat-bubble-ai code {
+      background: #0f172a;
+      padding: 2px 4px;
+      border-radius: 4px;
+      color: #38bdf8;
+    }
+    .chat-quick-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 6px 0;
+      scrollbar-width: thin;
+    }
+    .chip {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: flex-end;
+    }
+    .copilot-editor-pane {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #141a23;
+      padding: 12px;
+      min-height: 360px;
+    }
+    .modal-maximized .copilot-editor-pane {
+      min-height: 0 !important;
+      height: 100% !important;
+      flex: 1 !important;
+    }
+    .modal-maximized #copilotScriptCode {
+      flex: 1 !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      resize: none !important;
+    }
+
     /* Card Styles */
     .card {
       background: var(--bg-card);
@@ -558,73 +752,126 @@
 
   <!-- AI Copilot Modal -->
   <div class="modal-overlay" id="copilotModal">
-    <div class="modal" style="width: 760px; max-width: 95vw;">
+    <div class="modal" id="copilotModalDialog" style="width: 900px; max-width: 96vw;">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 20px;">🤖</span>
           <span style="font-weight: 600;">PipeSync AI Copilot 智能规则助手</span>
         </div>
-        <button class="btn btn-sm" onclick="closeModal('copilotModal')">✕</button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="btn btn-sm" id="btnToggleMaximizeCopilot" onclick="toggleMaximizeCopilot()" title="放大/还原窗口">⛶ 放大编辑</button>
+          <button class="btn btn-sm" onclick="closeModal('copilotModal')">✕</button>
+        </div>
       </div>
+
       <div class="modal-body">
-        <!-- AI Provider & Endpoint Configuration -->
-        <div style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <div style="font-weight: 600; font-size: 13px; color: var(--primary);">⚙️ AI 模型服务商与 API 端点设置</div>
-            <span id="aiConfigStatus" style="font-size: 11px; color: var(--text-muted);">自动保存于本地</span>
+        <!-- 1. Workspace Security Boundary Scope -->
+        <div style="background: #151d27; border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius); padding: 6px 12px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 280px;">
+            <span style="font-weight: 600; font-size: 12px; color: #38bdf8; white-space: nowrap;">📁 授权工作区:</span>
+            <select class="form-control" id="copilotWorkspaceSelect" style="flex: 1; padding: 3px 8px; font-size: 12px;" onchange="onCopilotWorkspaceChanged()">
+              <!-- Dynamically populated from sync folders -->
+            </select>
+            <button class="btn btn-sm" onclick="loadWorkspaceSampleFiles()" style="white-space: nowrap; padding: 3px 8px; font-size: 11px;">🔍 扫描样例</button>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label>预设服务厂商 (选择自动填入默认端点)</label>
-              <select class="form-control" id="aiProviderSelect" onchange="handleAiProviderChange()">
-                <option value="deepseek">DeepSeek (深度求索 - 推荐)</option>
-                <option value="openai">OpenAI (官方 GPT-4o / mini)</option>
-                <option value="siliconflow">SiliconFlow (硅基流动 - DeepSeek V3/R1)</option>
-                <option value="qwen">阿里通义千问 (DashScope / Qwen)</option>
-                <option value="moonshot">Moonshot (Kimi 月之暗面)</option>
-                <option value="zhipu">智谱开放平台 (GLM-4-Flash)</option>
-                <option value="ollama">Ollama (本地私有大模型 127.0.0.1:11434)</option>
-                <option value="custom">自定义 OpenAI 兼容端点</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label>模型标识 (Model ID)</label>
-              <input type="text" class="form-control" id="aiModelInput" placeholder="deepseek-chat" oninput="saveAiConfig()">
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label>API 接口端点 (Base URL)</label>
-              <input type="text" class="form-control" id="aiEndpointInput" placeholder="https://api.deepseek.com/v1" oninput="saveAiConfig()">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label>API Key 密钥 (本地加密存储)</label>
-              <input type="password" class="form-control" id="aiKeyInput" placeholder="sk-..." oninput="saveAiConfig()">
-            </div>
-          </div>
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; align-items: center;">
-            <span id="aiTestFeedback" style="font-size: 12px;"></span>
-            <button type="button" class="btn btn-sm" onclick="testAiConnection()">⚡ 探测 API 连通性</button>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span id="workspaceSampleStatus" style="font-size: 11px; color: var(--text-muted);"></span>
+            <span style="font-size: 11px; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">🔒 严格沙盒隔离</span>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>用自然语言描述您的同步归档与过滤规则</label>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" class="form-control" id="copilotPrompt" value="按录音或照片拍摄年份月份 (YYYY-MM) 自动分类归档，过滤小于10KB的缩略图和临时文件">
-            <button class="btn btn-primary" onclick="generateCopilotScript()" style="white-space: nowrap;">✨ AI 生成规则</button>
+        <!-- 2. AI Model Provider Settings (Collapsible) -->
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAiConfigCollapsible()">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 600; font-size: 12px; color: var(--primary);">⚙️ AI 模型服务商与 API 端点设置</span>
+              <span id="aiConfigToggleArrow" style="font-size: 10px; color: var(--text-muted);">▶</span>
+              <span style="font-size: 11px; color: var(--text-muted);">(点击展开/收起)</span>
+            </div>
+            <span id="aiConfigStatus" style="font-size: 11px; color: var(--text-muted);">已持久化保存于本地</span>
+          </div>
+          <div id="aiConfigContent" style="margin-top: 10px; display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>预设服务厂商 (选择自动填入默认端点)</label>
+                <select class="form-control" id="aiProviderSelect" onchange="handleAiProviderChange()">
+                  <option value="deepseek">DeepSeek (深度求索 - 推荐)</option>
+                  <option value="openai">OpenAI (官方 GPT-4o / mini)</option>
+                  <option value="siliconflow">SiliconFlow (硅基流动 - DeepSeek V3/R1)</option>
+                  <option value="qwen">阿里通义千问 (DashScope / Qwen)</option>
+                  <option value="moonshot">Moonshot (Kimi 月之暗面)</option>
+                  <option value="zhipu">智谱开放平台 (GLM-4-Flash)</option>
+                  <option value="ollama">Ollama (本地私有大模型 127.0.0.1:11434)</option>
+                  <option value="custom">自定义 OpenAI 兼容端点</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>模型标识 (Model ID)</label>
+                <input type="text" class="form-control" id="aiModelInput" placeholder="deepseek-chat" oninput="saveAiConfig()">
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>API 接口端点 (Base URL)</label>
+                <input type="text" class="form-control" id="aiEndpointInput" placeholder="https://api.deepseek.com/v1" oninput="saveAiConfig()">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>API Key 密钥 (本地加密存储)</label>
+                <input type="password" class="form-control" id="aiKeyInput" placeholder="sk-..." oninput="saveAiConfig()">
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; align-items: center;">
+              <span id="aiTestFeedback" style="font-size: 12px;"></span>
+              <button type="button" class="btn btn-sm" onclick="testAiConnection()">⚡ 探测 API 连通性</button>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label style="margin-bottom: 0;">生成的 IIFE 脚本 (在 PipeSync QuickJS 内存沙盒中运行)</label>
-            <button class="btn btn-sm" onclick="testCopilotScript()">🧪 在本地沙盒中测试验证</button>
-          </div>
-          <textarea class="form-control" id="copilotScriptCode" rows="9" style="font-family: monospace; font-size: 12px;"></textarea>
+        <!-- Mobile Tab Switcher (Visible only on small screens) -->
+        <div class="copilot-mobile-tabs" id="copilotMobileTabs" style="display: none; margin-bottom: 8px; gap: 8px;">
+          <button class="btn btn-sm btn-primary" id="tabBtnChat" onclick="switchCopilotTab('chat')" style="flex: 1;">💬 需求对话与确认</button>
+          <button class="btn btn-sm" id="tabBtnEditor" onclick="switchCopilotTab('editor')" style="flex: 1;">📝 规则代码编辑 (QuickJS)</button>
         </div>
-        <div id="copilotTestResult" style="margin-top: 6px; font-size: 12px;"></div>
+
+        <!-- 3. Conversational Chat & Script Split Layout -->
+        <div class="copilot-split-layout tab-chat">
+          <!-- Left Column: Conversational Requirements Interview -->
+          <div class="copilot-chat-pane">
+            <div class="chat-header">
+              <span>💬 规则需求多轮对话 (问清细节再生成)</span>
+              <button class="btn btn-sm" onclick="resetCopilotChat()" style="font-size: 11px; padding: 2px 8px;">⟳ 清空记录</button>
+            </div>
+            <div class="chat-messages-container" id="copilotChatMessages">
+              <!-- Dynamically populated -->
+            </div>
+            <div class="chat-quick-chips">
+              <span class="chip" onclick="sendQuickChip('我想按文件的修改年月(YYYY-MM)自动归档到对应子文件夹')">📅 按年月归档</span>
+              <span class="chip" onclick="sendQuickChip('过滤小于50KB的缩略图和.tmp/.part下载缓存')">🚫 过滤临时文件</span>
+              <span class="chip" onclick="sendQuickChip('按扩展名自动分类到 Audio / Media / Docs')">📂 按类型分流</span>
+              <span class="chip" onclick="sendQuickChip('需求已确认无误，请直接生成可运行的 QuickJS IIFE 规则代码')">⚡ 立即生成脚本</span>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" class="form-control" id="copilotChatInput" placeholder="描述您的同步过滤需求，或回答 AI 的细节询问... (Enter 发送)" onkeydown="handleChatInputKeyDown(event)" style="height: 34px; padding: 6px 10px; font-size: 12px;">
+              <button class="btn btn-primary" id="btnSendChat" onclick="sendChatMessage()" style="height: 34px; padding: 0 14px; font-size: 12px;">发送</button>
+            </div>
+          </div>
+
+          <!-- Right Column: Generated QuickJS IIFE Script Editor -->
+          <div class="copilot-editor-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-weight: 600; font-size: 13px;">📝 QuickJS IIFE 规则脚本</span>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-sm" onclick="copyCopilotScript()" title="复制代码">📋 复制</button>
+                <button class="btn btn-sm" onclick="resetCopilotScript()" title="恢复初始模板">↺ 重置</button>
+                <button class="btn btn-sm btn-primary" onclick="testCopilotScript()">🧪 沙盒验证</button>
+              </div>
+            </div>
+            <textarea class="form-control" id="copilotScriptCode" rows="14" style="font-family: monospace; font-size: 12px; flex: 1; min-height: 220px;" placeholder="// QuickJS IIFE 脚本代码..."></textarea>
+            <div id="copilotTestResult" style="margin-top: 6px; font-size: 12px;"></div>
+          </div>
+        </div>
       </div>
+
       <div class="modal-footer">
         <button class="btn" onclick="closeModal('copilotModal')">关闭</button>
         <button class="btn btn-primary" onclick="applyCopilotScript()">💾 保存并绑定到当前同步文件夹</button>
@@ -1000,18 +1247,168 @@
       }
     }
 
-    async function generateCopilotScript() {
-      const prompt = document.getElementById("copilotPrompt").value.trim();
-      if (!prompt) return;
+        // Copilot Conversational & Workspace State
+    let chatHistory = [];
+    let activeWorkspaceSamples = [];
+    let isCopilotMaximized = false;
+    let isAiConfigCollapsed = true;
+
+    function toggleMaximizeCopilot() {
+      const modal = document.getElementById("copilotModalDialog");
+      const btn = document.getElementById("btnToggleMaximizeCopilot");
+      isCopilotMaximized = !isCopilotMaximized;
+      if (isCopilotMaximized) {
+        modal.classList.add("modal-maximized");
+        btn.innerText = "🗗 还原窗口";
+      } else {
+        modal.classList.remove("modal-maximized");
+        btn.innerText = "⛶ 放大编辑";
+      }
+    }
+
+    function toggleAiConfigCollapsible() {
+      const content = document.getElementById("aiConfigContent");
+      const arrow = document.getElementById("aiConfigToggleArrow");
+      isAiConfigCollapsed = !isAiConfigCollapsed;
+      content.style.display = isAiConfigCollapsed ? "none" : "block";
+      arrow.innerText = isAiConfigCollapsed ? "▶" : "▼";
+    }
+
+    function populateCopilotWorkspaces() {
+      const select = document.getElementById("copilotWorkspaceSelect");
+      if (!select) return;
+      if (folders.length === 0) {
+        select.innerHTML = '<option value="">暂无同步文件夹 (请先在主界面添加)</option>';
+        return;
+      }
+      select.innerHTML = folders.map(f => `<option value="${f.path}">${f.label} (${f.path})</option>`).join('');
+      onCopilotWorkspaceChanged();
+    }
+
+    function onCopilotWorkspaceChanged() {
+      const path = document.getElementById("copilotWorkspaceSelect").value;
+      const statusBox = document.getElementById("workspaceSampleStatus");
+      if (!path) {
+        statusBox.innerHTML = '<span style="color: var(--danger);">请先在主界面绑定同步文件夹作为安全工作区</span>';
+        return;
+      }
+      statusBox.innerHTML = `已选定授权工作区: <code>${path}</code> (AI 读取范围已严格锁定，禁止跨目录读取)`;
+      loadWorkspaceSampleFiles();
+    }
+
+    async function loadWorkspaceSampleFiles() {
+      const path = document.getElementById("copilotWorkspaceSelect").value;
+      const statusBox = document.getElementById("workspaceSampleStatus");
+      if (!path) return;
+      statusBox.innerHTML = `⏳ 正在读取工作区 <code>${path}</code> 的文件结构样例...`;
+
+      try {
+        const res = await fetch(`/api/v1/copilot/workspace-files?path=${encodeURIComponent(path)}`);
+        if (res.ok) {
+          const data = await res.json();
+          activeWorkspaceSamples = data.sampleFiles || [];
+          const sampleNames = activeWorkspaceSamples.map(s => s.name).slice(0, 5).join(', ');
+          statusBox.innerHTML = `<span style="color: var(--success);">✓ 已完成授权扫描！匹配到 ${activeWorkspaceSamples.length} 项代表性文件 (如: ${sampleNames}...)。AI 已同步此结构。</span>`;
+          appendSystemNotice(`已加载工作区 [${data.folderLabel || path}] 文件样例 (${activeWorkspaceSamples.length} 项)。AI 规则助手将基于真实文件为您设计。`);
+        } else if (res.status === 403) {
+          statusBox.innerHTML = `<span style="color: var(--danger);">🔒 访问被拒绝：所选路径不在允许的同步文件夹内！</span>`;
+        } else {
+          statusBox.innerHTML = `<span style="color: #38bdf8;">🔒 已锁定授权工作区：<code>${path}</code> (受沙盒隔离限制，AI 仅作用于该指定目录)</span>`;
+          appendSystemNotice(`已锁定授权工作区 [${path}]。AI 将严格在指定文件夹范围内执行规则。`);
+        }
+      } catch (e) {
+        statusBox.innerHTML = `<span style="color: var(--text-muted);">读取提示: ${e.message}</span>`;
+      }
+    }
+
+    function resetCopilotChat() {
+      chatHistory = [];
+      const container = document.getElementById("copilotChatMessages");
+      container.innerHTML = "";
+      appendAiMessage("👋 您好！我是 PipeSync 规则助手。请描述您的归档同步需求（如按年月归档、过滤临时文件等），我会先帮您确认细节再生成可运行的规则脚本。");
+    }
+
+    function appendUserMessage(text) {
+      const container = document.getElementById("copilotChatMessages");
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble chat-bubble-user";
+      bubble.innerText = text;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendAiMessage(text) {
+      const container = document.getElementById("copilotChatMessages");
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble chat-bubble-ai";
+      let formatted = text.replace(/\n/g, '<br>');
+      bubble.innerHTML = formatted;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function appendSystemNotice(text) {
+      const container = document.getElementById("copilotChatMessages");
+      const notice = document.createElement("div");
+      notice.style.fontSize = "11px";
+      notice.style.color = "var(--text-muted)";
+      notice.style.textAlign = "center";
+      notice.style.padding = "4px";
+      notice.innerText = "— " + text + " —";
+      container.appendChild(notice);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendQuickChip(text) {
+      document.getElementById("copilotChatInput").value = text;
+      sendChatMessage();
+    }
+
+    function handleChatInputKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById("copilotChatInput");
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      appendUserMessage(userText);
+      chatHistory.push({ role: "user", content: userText });
+      input.value = "";
+
+      const btn = document.getElementById("btnSendChat");
+      btn.disabled = true;
+      btn.innerText = "...";
 
       const endpoint = document.getElementById("aiEndpointInput").value.trim();
       const model = document.getElementById("aiModelInput").value.trim();
       const key = document.getElementById("aiKeyInput").value.trim();
-      const codeArea = document.getElementById("copilotScriptCode");
-      const resBox = document.getElementById("copilotTestResult");
+      const workspacePath = document.getElementById("copilotWorkspaceSelect").value || "/sdcard/Browser";
 
-      codeArea.value = "// 正在调用 AI 智能生成 QuickJS 沙盒规则脚本...\n";
-      resBox.innerHTML = "";
+      let sampleInfo = "";
+      if (activeWorkspaceSamples.length > 0) {
+        sampleInfo = "用户授权的工作区路径为: " + workspacePath + "。当前工作区中扫描到的代表性样例文件包括: " +
+          activeWorkspaceSamples.slice(0, 10).map(s => `${s.name} (${s.ext}, ${formatBytes(s.size)})`).join(", ") + "。";
+      } else {
+        sampleInfo = "用户授权的工作区路径为: " + workspacePath + "。";
+      }
+
+      const systemPrompt = "你是一个 PipeSync 智能规则架构师与代码助手。\n" +
+        "【安全边界】：你已被严格限制在用户授权的同步工作区内运行（" + sampleInfo + "），严禁访问工作区之外的任何文件。\n" +
+        "【对话式需求分析原则】：\n" +
+        "1. 当用户提出初步归档或过滤需求时，不要立刻盲目给出脚本，请先向用户询问 1~2 个关键细节（例如：按修改日期还是创建日期分类？目标目录格式是 YYYY-MM 还是 YYYY/MM？是否需要过滤小于特定大小的临时文件？同名文件是否重命名？）。\n" +
+        "2. 如果用户回答了细节、或者用户明确输入'生成脚本'/'确认需求'/'立即生成'，请给出最终结论，并生成规范的 QuickJS IIFE 规则脚本代码！\n" +
+        "3. 规则脚本必须用 ```javascript ... ``` 代码块包裹。\n" +
+        "签名规范：\n" +
+        "(function(file, context) {\n" +
+        "  // file: { name, path, size, ext, modTime, isDirectory }\n" +
+        "  // context: { platform, syncMode }\n" +
+        "  return { accept: true, targetSubdir: 'YYYY-MM', newFilename: file.name };\n" +
+        "})";
 
       if (endpoint && (key || endpoint.includes("127.0.0.1") || endpoint.includes("localhost"))) {
         try {
@@ -1020,65 +1417,69 @@
           const headers = { "Content-Type": "application/json" };
           if (key) headers["Authorization"] = "Bearer " + key;
 
-          const systemPrompt = "You are a PipeSync QuickJS rule script generator. Output ONLY a valid JavaScript IIFE without markdown backticks. " +
-            "Signature: (function(file, context) { return { accept: boolean, targetSubdir: string, newFilename?: string }; }) " +
-            "file has properties: { name, path, size, ext, modTime, isDirectory }. context has { platform, syncMode }.";
+          const messages = [
+            { role: "system", content: systemPrompt },
+            ...chatHistory
+          ];
 
           const res = await fetch(url, {
             method: "POST",
             headers: headers,
             body: JSON.stringify({
               model: model || "deepseek-chat",
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: "规则要求: " + prompt }
-              ],
-              temperature: 0.1
+              messages: messages,
+              temperature: 0.3
             })
           });
 
           if (res.ok) {
             const data = await res.json();
-            let code = data.choices[0].message.content.trim();
-            code = code.replace(/^```[a-zA-Z]*\n?/, "").replace(/\n?```$/, "").trim();
-            codeArea.value = code;
-            resBox.innerHTML = '<span style="color: var(--success);">✓ 成功调用大模型生成规则！点击下方测试或应用。</span>';
+            const aiReply = data.choices[0].message.content.trim();
+            chatHistory.push({ role: "assistant", content: aiReply });
+            appendAiMessage(aiReply);
+            checkAndExtractCode(aiReply);
+            btn.disabled = false;
+            btn.innerText = "发送";
             return;
           }
         } catch (e) {
-          console.warn("Direct LLM request failed, falling back to local template:", e);
+          console.warn("LLM API request failed, falling back to conversational template:", e);
         }
       }
 
-      // Local intelligent template generation
-      const localCode = generateLocalRule(prompt);
-      codeArea.value = localCode;
-      resBox.innerHTML = '<span style="color: var(--primary);">✓ 已应用本地智能规则（填写上方 API Key 可调用云端大模型动态扩展）</span>';
+      // Offline / Local Conversational Fallback Responder
+      setTimeout(() => {
+        handleLocalConversationalReply(userText);
+        btn.disabled = false;
+        btn.innerText = "发送";
+      }, 500);
     }
 
     function generateLocalRule(prompt) {
       return `(function(file, context) {
     // 1. 过滤隐藏文件与临时下载文件
     if (file.name.startsWith('.') || file.name.endsWith('.tmp') || file.name.endsWith('.part')) {
-        return { accept: false, reason: "临时文件或隐藏文件" };
+        return { accept: false, reason: "临时缓存或隐藏文件" };
     }
 
-    // 2. 文件大小阈值过滤 (过滤小于 10KB 缩略图与空文件)
-    if (file.size < 10240) {
-        return { accept: false, reason: "小于10KB缩略图" };
+    // 2. 文件大小阈值过滤 (过滤小于 20KB 缩略图与空文件)
+    if (file.size < 20480) {
+        return { accept: false, reason: "小于20KB缩略图过滤" };
     }
 
     // 3. 提取修改时间归档年月 (YYYY-MM)
     const date = new Date(file.modTime || Date.now());
     const yearMonth = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
 
-    // 4. 按媒体类型路由至对应子目录
+    // 4. 按媒体类型分类归档
     const ext = (file.ext || "").toLowerCase();
     let targetSubdir = yearMonth;
     if ([".mp3", ".m4a", ".wav", ".flac", ".aac"].includes(ext)) {
         targetSubdir = "Audio/" + yearMonth;
     } else if ([".jpg", ".jpeg", ".png", ".heic", ".webp", ".mp4"].includes(ext)) {
         targetSubdir = "Media/" + yearMonth;
+    } else if ([".pdf", ".doc", ".docx", ".txt", ".md"].includes(ext)) {
+        targetSubdir = "Docs/" + yearMonth;
     }
 
     return {
@@ -1088,6 +1489,89 @@
     };
 })`;
     }
+
+    function handleLocalConversationalReply(userText) {
+      let reply = "";
+      const lower = userText.toLowerCase();
+
+      if (lower.includes("生成") || lower.includes("确认") || lower.includes("可以了") || lower.includes("好") || chatHistory.length >= 4) {
+        reply = "✅ 好的，需求细节已全部明确！已为您在授权工作区内生成完整的 QuickJS IIFE 过滤与归档脚本：\n\n```javascript\n" +
+          generateLocalRule(userText) + "\n```\n代码已自动同步到右侧编辑器中，您可以点击【沙盒验证】进行零风险测试！";
+        chatHistory.push({ role: "assistant", content: reply });
+        appendAiMessage(reply);
+        checkAndExtractCode(reply);
+      } else {
+        reply = "收到您的需求！为了确保同步归档符合您的预期，请先和我确认以下两个细节：\n" +
+          "1. 归档目录结构您倾向于单层 `YYYY-MM` (如 `2026-09`) 还是多层 `YYYY/MM`？\n" +
+          "2. 是否需要过滤掉小于 20KB 的缩略图以及 `.tmp` 临时文件？\n\n您回复确认后我将立刻为您生成完整的 QuickJS 沙盒脚本！";
+        chatHistory.push({ role: "assistant", content: reply });
+        appendAiMessage(reply);
+      }
+    }
+
+    function switchCopilotTab(tab) {
+      const layout = document.querySelector(".copilot-split-layout");
+      const btnChat = document.getElementById("tabBtnChat");
+      const btnEditor = document.getElementById("tabBtnEditor");
+      if (!layout) return;
+      if (tab === 'chat') {
+        layout.classList.remove('tab-editor');
+        layout.classList.add('tab-chat');
+        if (btnChat) btnChat.classList.add('btn-primary');
+        if (btnEditor) btnEditor.classList.remove('btn-primary');
+      } else {
+        layout.classList.remove('tab-chat');
+        layout.classList.add('tab-editor');
+        if (btnEditor) btnEditor.classList.add('btn-primary');
+        if (btnChat) btnChat.classList.remove('btn-primary');
+      }
+    }
+
+    function copyCopilotScript() {
+      const code = document.getElementById("copilotScriptCode").value;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => {
+          showToast("✓ 脚本代码已成功复制到剪贴板");
+        }).catch(() => {
+          showToast("已选中代码，请手动复制");
+        });
+      } else {
+        document.getElementById("copilotScriptCode").select();
+        showToast("已全选代码，请复制");
+      }
+    }
+
+    function resetCopilotScript() {
+      if (confirm("确定要将脚本重置为基础规则模板吗？")) {
+        document.getElementById("copilotScriptCode").value = generateLocalRule("");
+        document.getElementById("copilotTestResult").innerHTML = '<span style="color: var(--text-muted);">已重置为基础规则模板</span>';
+      }
+    }
+
+    function checkAndExtractCode(text) {
+      const codeMatch = text.match(/```(?:javascript|js)?([\s\S]*?)```/);
+      if (codeMatch && codeMatch[1]) {
+        const code = codeMatch[1].trim();
+        document.getElementById("copilotScriptCode").value = code;
+        document.getElementById("copilotTestResult").innerHTML = '<span style="color: var(--success);">✓ 已自动将 AI 生成的规则提取至编辑器，可直接调试！</span>';
+        if (window.innerWidth <= 680) {
+          switchCopilotTab('editor');
+        }
+      }
+    }
+
+    function openCopilotModal() {
+      openModal('copilotModal');
+      populateCopilotWorkspaces();
+      if (chatHistory.length === 0) {
+        resetCopilotChat();
+      }
+      if (!document.getElementById("copilotScriptCode").value) {
+        document.getElementById("copilotScriptCode").value = generateLocalRule("");
+      }
+      switchCopilotTab('chat');
+    }
+
 
     async function testCopilotScript() {
       const script = document.getElementById("copilotScriptCode").value;

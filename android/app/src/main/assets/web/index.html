@@ -583,13 +583,22 @@
   </div>
 
   <script>
+        function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return "0 B";
+      const k = 1024;
+      const sizes = ["B", "KB", "MB", "GB", "TB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    }
+
     let systemState = {};
     let folders = [];
     let devices = [];
 
     async function fetchStatus() {
       try {
-        const res = await fetch('/api/v1/system/status');
+        let res = await fetch('/api/v1/status');
+        if (!res.ok) res = await fetch('/api/v1/system/status');
         if (res.ok) {
           systemState = await res.json();
           updateSystemUI();
@@ -631,9 +640,8 @@
 
     function updateSystemUI() {
       if (systemState.nodeId) document.getElementById('nodeIdDisplay').innerText = systemState.nodeId;
-      if (systemState.purgedCount !== undefined) {
-        document.getElementById('purgedFilesDisplay').innerText = `\${systemState.purgedCount} 项 (100% SHA-256 匹配)`;
-      }
+      const purged = systemState.purgedCount !== undefined ? systemState.purgedCount : (systemState.totalPurgedCount !== undefined ? systemState.totalPurgedCount : 0);
+      document.getElementById('purgedFilesDisplay').innerText = `${purged} 项 (100% SHA-256 匹配)`;
       if (systemState.bandwidth) {
         document.getElementById('bandwidthDisplay').innerText = systemState.bandwidth;
       }
@@ -647,7 +655,7 @@
     }
 
     function renderFolders() {
-      document.getElementById('folderCount').innerText = `(\${folders.length})`;
+      document.getElementById('folderCount').innerText = `(${folders.length})`;
       const container = document.getElementById('folderList');
       if (folders.length === 0) {
         container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted); background: var(--bg-card); border-radius: 8px; border: 1px dashed var(--border);">点击上方 "+ 添加文件夹" 绑定本地同步目录</div>';
@@ -666,37 +674,37 @@
           : (f.mode === 'desktop_pull' ? 'Desktop Pull (桌面主动拉取模式)' : 'Send Only (单向备份保留)');
 
         return `
-          <div class="card" id="folder-\${f.id}">
-            <div class="card-header" onclick="toggleCardBody('\${f.id}')">
+          <div class="card" id="folder-${f.id}">
+            <div class="card-header" onclick="toggleCardBody('${f.id}')">
               <div class="card-title-group">
                 <span class="folder-icon">📁</span>
-                <span class="card-label">\${f.label}</span>
-                <span class="card-sub">(\${f.id})</span>
+                <span class="card-label">${f.label}</span>
+                <span class="card-sub">(${f.id})</span>
               </div>
-              <div>\${statusBadge}</div>
+              <div>${statusBadge}</div>
             </div>
-            <div class="card-body" id="body-\${f.id}">
+            <div class="card-body" id="body-${f.id}">
               <div class="info-grid">
                 <div class="info-label">文件夹路径:</div>
-                <div class="info-value"><code>\${f.path}</code></div>
+                <div class="info-value"><code>${f.path}</code></div>
                 <div class="info-label">同步策略:</div>
-                <div class="info-value">\${modeText}</div>
+                <div class="info-value">${modeText}</div>
                 <div class="info-label">目标远端:</div>
-                <div class="info-value"><code>\${f.remoteTarget}</code></div>
+                <div class="info-value"><code>${f.remoteTarget}</code></div>
                 <div class="info-label">挂载插件:</div>
-                <div class="info-value"><span class="badge badge-success">\${f.plugin}</span></div>
+                <div class="info-value"><span class="badge badge-success">${f.plugin}</span></div>
                 <div class="info-label">全局状态:</div>
-                <div class="info-value">\${f.fileCount || 0} 个文件 (\${f.totalSizeFormatted || '0 B'})</div>
+                <div class="info-value">${f.fileCount || 0} 个文件 (${f.totalSizeFormatted || formatBytes(f.totalBytes)})</div>
                 <div class="info-label">自动监听:</div>
-                <div class="info-value">\${f.autoWatch ? '已启用 FileSystemWatcher' : '仅手动'}</div>
+                <div class="info-value">${f.autoWatch ? '已启用 FileSystemWatcher' : '仅手动'}</div>
               </div>
               <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: \${f.progress || 100}%"></div>
+                <div class="progress-bar-fill" style="width: ${f.progress || 100}%"></div>
               </div>
               <div class="card-actions">
-                <button class="btn btn-sm" onclick="rescanFolder('\${f.id}')">⟳ 立即扫描同步</button>
-                <button class="btn btn-sm" onclick="togglePauseFolder('\${f.id}')">\${isPaused ? '▶ 恢复' : '⏸ 暂停'}</button>
-                <button class="btn btn-sm" style="color: var(--danger);" onclick="deleteFolder('\${f.id}')">🗑 移除</button>
+                <button class="btn btn-sm" onclick="rescanFolder('${f.id}')">⟳ 立即扫描同步</button>
+                <button class="btn btn-sm" onclick="togglePauseFolder('${f.id}')">${isPaused ? '▶ 恢复' : '⏸ 暂停'}</button>
+                <button class="btn btn-sm" style="color: var(--danger);" onclick="deleteFolder('${f.id}')">🗑 移除</button>
               </div>
             </div>
           </div>
@@ -705,7 +713,7 @@
     }
 
     function renderDevices() {
-      document.getElementById('deviceCount').innerText = `(\${devices.length})`;
+      document.getElementById('deviceCount').innerText = `(${devices.length})`;
       const container = document.getElementById('deviceList');
       container.innerHTML = devices.map(d => {
         const isLocal = d.isLocal;
@@ -717,21 +725,21 @@
           <div class="card">
             <div class="card-header">
               <div class="card-title-group">
-                <span>\${isLocal ? '💻' : '🌐'}</span>
-                <span class="card-label">\${d.name} \${isLocal ? '(本设备)' : ''}</span>
+                <span>${isLocal ? '💻' : '🌐'}</span>
+                <span class="card-label">${d.name} ${isLocal ? '(本设备)' : ''}</span>
               </div>
-              <div>\${statusBadge}</div>
+              <div>${statusBadge}</div>
             </div>
             <div class="card-body">
               <div class="info-grid">
                 <div class="info-label">设备地址:</div>
-                <div class="info-value"><code>\${d.address}</code></div>
+                <div class="info-value"><code>${d.address}</code></div>
                 <div class="info-label">协议类型:</div>
-                <div class="info-value">\${d.protocol.toUpperCase()}</div>
+                <div class="info-value">${d.protocol.toUpperCase()}</div>
                 <div class="info-label">2PC 校验模式:</div>
                 <div class="info-value">SHA-256 (RFC 6234 CGo / librclone)</div>
                 <div class="info-label">最后活跃:</div>
-                <div class="info-value">\${d.lastSeen || '刚刚'}</div>
+                <div class="info-value">${d.lastSeen || '刚刚'}</div>
               </div>
             </div>
           </div>
@@ -741,7 +749,7 @@
       // Also update remote selector in add folder modal
       const remoteSelect = document.getElementById('newFolderRemote');
       remoteSelect.innerHTML = devices.filter(d => !d.isLocal).map(d => 
-        `<option value="\${d.address}">\${d.name} (\${d.protocol.toUpperCase()})</option>`
+        `<option value="${d.address}">${d.name} (${d.protocol.toUpperCase()})</option>`
       ).join('') || '<option value="backup_dir">默认局域网目标 (Default Target)</option>';
     }
 
@@ -762,13 +770,13 @@
 
         return `
           <tr>
-            <td>\${t.taskId}</td>
-            <td><span class="badge \${badgeClass}">\${t.stage}</span></td>
-            <td title="\${t.localPath}">\${t.localPath.split('/').pop()}</td>
-            <td title="\${t.targetPath}">\${t.targetPath}</td>
-            <td>\${(t.localSha256 || '').substring(0, 8)}...</td>
-            <td>\${(t.remoteSha256 || 'null').substring(0, 8)}...</td>
-            <td>\${t.updatedAt || 'N/A'}</td>
+            <td>${t.taskId}</td>
+            <td><span class="badge ${badgeClass}">${t.stage}</span></td>
+            <td title="${t.localPath}">${t.localPath.split('/').pop()}</td>
+            <td title="${t.targetPath}">${t.targetPath}</td>
+            <td>${(t.localSha256 || '').substring(0, 8)}...</td>
+            <td>${(t.remoteSha256 || 'null').substring(0, 8)}...</td>
+            <td>${t.updatedAt || 'N/A'}</td>
           </tr>
         `;
       }).join('');

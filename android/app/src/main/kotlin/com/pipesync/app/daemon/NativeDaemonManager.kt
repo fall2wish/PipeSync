@@ -169,7 +169,7 @@ object NativeDaemonManager {
                 }
 
                 // 2. System Status API
-                (method == "GET" && path == "/api/v1/status") -> {
+                (method == "GET" && (path == "/api/v1/status" || path == "/api/v1/system/status")) -> {
                     val uptimeSec = (System.currentTimeMillis() - startTime) / 1000
                     val json = JSONObject().apply {
                         put("nodeId", "PIPESYNC-ANDROID-PKX110-8384")
@@ -177,7 +177,9 @@ object NativeDaemonManager {
                         put("model", "${Build.MANUFACTURER} ${Build.MODEL}")
                         put("isSyncing", false)
                         put("totalBytesSynced", 6609940)
+                        put("purgedCount", 6)
                         put("totalPurgedCount", 6)
+                        put("bandwidth", "0 B/s / 0 B/s")
                         put("uptime", "${uptimeSec / 60}m ${uptimeSec % 60}s")
                         put("isAllFilesGranted", Environment.isExternalStorageManager())
                     }
@@ -295,6 +297,18 @@ object NativeDaemonManager {
                     }
                 }
 
+                // 8. Dynamic Web Console Hot-Update Endpoint
+                (method == "POST" && path == "/api/v1/web/update") -> {
+                    try {
+                        val webDir = File(context.filesDir, "web")
+                        if (!webDir.exists()) webDir.mkdirs()
+                        File(webDir, "index.html").writeText(body, Charsets.UTF_8)
+                        sendJsonResponse(output, 200, """{"success":true,"bytes":${body.length}}""")
+                    } catch (e: Exception) {
+                        sendJsonResponse(output, 500, """{"error":"${e.message}"}""")
+                    }
+                }
+
                 else -> {
                     sendError(output, 404, "Unknown endpoint")
                 }
@@ -321,8 +335,13 @@ object NativeDaemonManager {
     }
 
     private fun serveHtmlConsole(context: Context, output: OutputStream) {
+        val overrideFile = File(context.filesDir, "web/index.html")
         val html = try {
-            context.assets.open("web/index.html").bufferedReader().use { it.readText() }
+            if (overrideFile.exists()) {
+                overrideFile.readText(Charsets.UTF_8)
+            } else {
+                context.assets.open("web/index.html").bufferedReader().use { it.readText() }
+            }
         } catch (e: Exception) {
             "<!DOCTYPE html><html><body><h1>PipeSync Console</h1><p>Running on Android 16</p></body></html>"
         }

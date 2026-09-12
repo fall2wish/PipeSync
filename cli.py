@@ -42,6 +42,12 @@ def main():
 
     subparsers.add_parser("android", help="Display Android native WebKit host project details and jniLibs status")
 
+    phone_parser = subparsers.add_parser("pull-phone", help="Pull and synchronize files from connected phone via 2PC verification")
+    phone_parser.add_argument("--device", default="192.168.1.227:44825", help="ADB serial or IP:port of phone")
+    phone_parser.add_argument("--source", default="/sdcard/Browser", help="Source folder path on phone")
+    phone_parser.add_argument("--dest", default="/mnt/f/bak/phone/Browser", help="Destination folder on PC")
+    phone_parser.add_argument("--db", default=default_db, help="Path to SQLite WAL database")
+
     args = parser.parse_args()
 
     if args.command == "version":
@@ -190,6 +196,11 @@ def main():
         print("\nTo build Android APK with Embedded WebKit:")
         print("  cd android && ./gradlew assembleRelease")
         print("  (or open the 'android' folder in Android Studio)")
+        return
+
+    if args.command == "pull-phone":
+        from scripts.sync_phone import sync_browser_folder
+        sync_browser_folder(device_serial=args.device, phone_dir=args.source, dest_dir=args.dest, db_path=args.db)
         return
 
     parser.print_help()

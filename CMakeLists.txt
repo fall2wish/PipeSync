@@ -4,6 +4,10 @@ project(pipesync_native C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # 1. librclone C-Shared FFI Library (Portable C99 / Win32 / POSIX)
 add_library(rclone SHARED
     native/librclone.c
@@ -49,19 +53,29 @@ if(NOT MSVC)
     )
 
     add_custom_command(TARGET pipesync_quickjs POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/native
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:pipesync_quickjs>
-        ${CMAKE_CURRENT_SOURCE_DIR}/native/
+        ${CMAKE_CURRENT_SOURCE_DIR}/native
     )
 endif()
 
-# 3. Test verification executable
-add_executable(test_librclone
-    native/test_librclone.c
-)
+# 3. Test verification executable (POSIX / GCC)
+if(NOT MSVC)
+    add_executable(test_librclone
+        native/test_librclone.c
+    )
 
-target_link_libraries(test_librclone PRIVATE rclone)
-target_include_directories(test_librclone PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/native)
+    target_link_libraries(test_librclone PRIVATE rclone)
+    target_include_directories(test_librclone PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/native)
+
+    add_custom_command(TARGET test_librclone POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/native
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:test_librclone>
+        ${CMAKE_CURRENT_SOURCE_DIR}/native
+    )
+endif()
 
 # 4. Windows System Tray Host Application (WIN32 Subsystem)
 if(WIN32)
@@ -73,21 +87,17 @@ if(WIN32)
     target_include_directories(PipeSyncTray PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/windows/tray)
 
     add_custom_command(TARGET PipeSyncTray POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/build
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:PipeSyncTray>
-        ${CMAKE_CURRENT_SOURCE_DIR}/build/
+        ${CMAKE_CURRENT_SOURCE_DIR}/build
     )
 endif()
 
-# Copy output binary and libraries to native/ and build/ directory
+# Copy output binary and libraries to native/ directory
 add_custom_command(TARGET rclone POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/native
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     $<TARGET_FILE:rclone>
-    ${CMAKE_CURRENT_SOURCE_DIR}/native/
-)
-
-add_custom_command(TARGET test_librclone POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:test_librclone>
-    ${CMAKE_CURRENT_SOURCE_DIR}/native/
+    ${CMAKE_CURRENT_SOURCE_DIR}/native
 )

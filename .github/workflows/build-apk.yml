@@ -144,11 +144,20 @@ jobs:
         with:
           sdk: stable
 
+      - name: Install Dart Dependencies
+        shell: pwsh
+        working-directory: dart
+        run: |
+          dart pub get
+
       - name: Compile Native C Libraries & Win32 System Tray Host via CMake
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path "build"
+          New-Item -ItemType Directory -Force -Path "native"
           cmake -B build-win -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-win --config Release --target rclone PipeSyncTray
+          cmake --build build-win --config Release --target rclone --verbose
+          cmake --build build-win --config Release --target PipeSyncTray --verbose
 
       - name: Compile Standalone Windows Daemon Executable
         shell: pwsh

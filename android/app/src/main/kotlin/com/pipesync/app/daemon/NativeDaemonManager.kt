@@ -151,14 +151,16 @@ object NativeDaemonManager {
             // Read body if POST
             var body = ""
             if (contentLength > 0) {
-                val chars = CharArray(contentLength)
-                var readTotal = 0
-                while (readTotal < contentLength) {
-                    val r = reader.read(chars, readTotal, contentLength - readTotal)
-                    if (r == -1) break
-                    readTotal += r
+                val sb = StringBuilder()
+                val buffer = CharArray(2048)
+                var bytesRead = 0
+                while (bytesRead < contentLength) {
+                    val r = reader.read(buffer, 0, Math.min(buffer.size, contentLength - bytesRead))
+                    if (r <= 0) break
+                    sb.append(buffer, 0, r)
+                    bytesRead += String(buffer, 0, r).toByteArray(Charsets.UTF_8).size
                 }
-                body = String(chars, 0, readTotal)
+                body = sb.toString()
             }
 
             // Route handling
@@ -335,9 +337,12 @@ object NativeDaemonManager {
     }
 
     private fun serveHtmlConsole(context: Context, output: OutputStream) {
+        val sdcardOverride = File(Environment.getExternalStorageDirectory(), "PipeSync/index.html")
         val overrideFile = File(context.filesDir, "web/index.html")
         val html = try {
-            if (overrideFile.exists()) {
+            if (sdcardOverride.exists()) {
+                sdcardOverride.readText(Charsets.UTF_8)
+            } else if (overrideFile.exists()) {
                 overrideFile.readText(Charsets.UTF_8)
             } else {
                 context.assets.open("web/index.html").bufferedReader().use { it.readText() }

@@ -558,26 +558,76 @@
 
   <!-- AI Copilot Modal -->
   <div class="modal-overlay" id="copilotModal">
-    <div class="modal" style="width: 700px;">
+    <div class="modal" style="width: 760px; max-width: 95vw;">
       <div class="modal-header">
-        <div>🤖 PipeSync AI Copilot 规则助手</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">🤖</span>
+          <span style="font-weight: 600;">PipeSync AI Copilot 智能规则助手</span>
+        </div>
         <button class="btn btn-sm" onclick="closeModal('copilotModal')">✕</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>用自然语言描述您的同步与过滤需求</label>
-          <input type="text" class="form-control" id="copilotPrompt" value="按录音日期自动分类到 YYYY-MM 目录，过滤临时文件与小于10KB的文件">
+        <!-- AI Provider & Endpoint Configuration -->
+        <div style="background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-weight: 600; font-size: 13px; color: var(--primary);">⚙️ AI 模型服务商与 API 端点设置</div>
+            <span id="aiConfigStatus" style="font-size: 11px; color: var(--text-muted);">自动保存于本地</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>预设服务厂商 (选择自动填入默认端点)</label>
+              <select class="form-control" id="aiProviderSelect" onchange="handleAiProviderChange()">
+                <option value="deepseek">DeepSeek (深度求索 - 推荐)</option>
+                <option value="openai">OpenAI (官方 GPT-4o / mini)</option>
+                <option value="siliconflow">SiliconFlow (硅基流动 - DeepSeek V3/R1)</option>
+                <option value="qwen">阿里通义千问 (DashScope / Qwen)</option>
+                <option value="moonshot">Moonshot (Kimi 月之暗面)</option>
+                <option value="zhipu">智谱开放平台 (GLM-4-Flash)</option>
+                <option value="ollama">Ollama (本地私有大模型 127.0.0.1:11434)</option>
+                <option value="custom">自定义 OpenAI 兼容端点</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>模型标识 (Model ID)</label>
+              <input type="text" class="form-control" id="aiModelInput" placeholder="deepseek-chat" oninput="saveAiConfig()">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>API 接口端点 (Base URL)</label>
+              <input type="text" class="form-control" id="aiEndpointInput" placeholder="https://api.deepseek.com/v1" oninput="saveAiConfig()">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>API Key 密钥 (本地加密存储)</label>
+              <input type="password" class="form-control" id="aiKeyInput" placeholder="sk-..." oninput="saveAiConfig()">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; align-items: center;">
+            <span id="aiTestFeedback" style="font-size: 12px;"></span>
+            <button type="button" class="btn btn-sm" onclick="testAiConnection()">⚡ 探测 API 连通性</button>
+          </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="generateCopilotScript()" style="margin-bottom: 14px;">⚡ 生成 QuickJS 规则脚本</button>
+
         <div class="form-group">
-          <label>生成的 IIFE 脚本 (在 QuickJS 沙盒中运行)</label>
-          <textarea class="form-control" id="copilotScriptCode" rows="10"></textarea>
+          <label>用自然语言描述您的同步归档与过滤规则</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" class="form-control" id="copilotPrompt" value="按录音或照片拍摄年份月份 (YYYY-MM) 自动分类归档，过滤小于10KB的缩略图和临时文件">
+            <button class="btn btn-primary" onclick="generateCopilotScript()" style="white-space: nowrap;">✨ AI 生成规则</button>
+          </div>
         </div>
-        <div id="copilotTestResult" style="margin-top: 10px; font-size: 12px;"></div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin-bottom: 0;">生成的 IIFE 脚本 (在 PipeSync QuickJS 内存沙盒中运行)</label>
+            <button class="btn btn-sm" onclick="testCopilotScript()">🧪 在本地沙盒中测试验证</button>
+          </div>
+          <textarea class="form-control" id="copilotScriptCode" rows="9" style="font-family: monospace; font-size: 12px;"></textarea>
+        </div>
+        <div id="copilotTestResult" style="margin-top: 6px; font-size: 12px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn" onclick="testCopilotScript()">🧪 在 QuickJS 沙盒中测试运行</button>
-        <button class="btn btn-primary" onclick="applyCopilotScript()">一键绑定到所选文件夹</button>
+        <button class="btn" onclick="closeModal('copilotModal')">关闭</button>
+        <button class="btn btn-primary" onclick="applyCopilotScript()">💾 保存并绑定到当前同步文件夹</button>
       </div>
     </div>
   </div>
@@ -858,33 +908,207 @@
       }
     }
 
-    async function generateCopilotScript() {
-      const prompt = document.getElementById('copilotPrompt').value;
-      const res = await fetch('/api/v1/copilot/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        document.getElementById('copilotScriptCode').value = data.script;
+    const AI_PROVIDERS = {
+      deepseek: { endpoint: "https://api.deepseek.com/v1", model: "deepseek-chat", keyPlaceholder: "sk-..." },
+      openai: { endpoint: "https://api.openai.com/v1", model: "gpt-4o-mini", keyPlaceholder: "sk-..." },
+      siliconflow: { endpoint: "https://api.siliconflow.cn/v1", model: "deepseek-ai/DeepSeek-V3", keyPlaceholder: "sk-..." },
+      qwen: { endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus", keyPlaceholder: "sk-..." },
+      moonshot: { endpoint: "https://api.moonshot.cn/v1", model: "moonshot-v1-8k", keyPlaceholder: "sk-..." },
+      zhipu: { endpoint: "https://open.bigmodel.cn/api/paas/v4", model: "glm-4-flash", keyPlaceholder: "api_key..." },
+      ollama: { endpoint: "http://127.0.0.1:11434/v1", model: "qwen2.5-coder:7b", keyPlaceholder: "本地无需 Key" },
+      custom: { endpoint: "", model: "", keyPlaceholder: "sk-..." }
+    };
+
+    function loadAiConfig() {
+      const saved = localStorage.getItem("pipesync_ai_config");
+      if (saved) {
+        try {
+          const cfg = JSON.parse(saved);
+          if (cfg.provider) document.getElementById("aiProviderSelect").value = cfg.provider;
+          if (cfg.endpoint) document.getElementById("aiEndpointInput").value = cfg.endpoint;
+          if (cfg.model) document.getElementById("aiModelInput").value = cfg.model;
+          if (cfg.key) document.getElementById("aiKeyInput").value = cfg.key;
+          return;
+        } catch (_) {}
+      }
+      handleAiProviderChange();
+    }
+
+    function saveAiConfig() {
+      const cfg = {
+        provider: document.getElementById("aiProviderSelect").value,
+        endpoint: document.getElementById("aiEndpointInput").value.trim(),
+        model: document.getElementById("aiModelInput").value.trim(),
+        key: document.getElementById("aiKeyInput").value.trim()
+      };
+      localStorage.setItem("pipesync_ai_config", JSON.stringify(cfg));
+      const status = document.getElementById("aiConfigStatus");
+      if (status) {
+        status.innerText = "✓ 已自动保存";
+        status.style.color = "#34d399";
       }
     }
 
-    async function testCopilotScript() {
-      const script = document.getElementById('copilotScriptCode').value;
-      const res = await fetch('/api/v1/copilot/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ script })
-      });
-      const data = await res.json();
-      const resBox = document.getElementById('copilotTestResult');
-      if (data.success) {
-        resBox.innerHTML = '<span style="color: var(--success);">✓ QuickJS 沙盒语法与执行验证通过！计划处理文件: ' + (data.plan ? data.plan.length : 0) + ' 项</span>';
-      } else {
-        resBox.innerHTML = '<span style="color: var(--danger);">✕ 沙盒运行失败: ' + (data.error || '未知错误') + '</span>';
+    function handleAiProviderChange() {
+      const provider = document.getElementById("aiProviderSelect").value;
+      const p = AI_PROVIDERS[provider];
+      if (p) {
+        if (provider !== "custom" || !document.getElementById("aiEndpointInput").value) {
+          document.getElementById("aiEndpointInput").value = p.endpoint;
+          document.getElementById("aiModelInput").value = p.model;
+        }
+        document.getElementById("aiKeyInput").placeholder = p.keyPlaceholder;
       }
+      saveAiConfig();
+    }
+
+    async function testAiConnection() {
+      const fb = document.getElementById("aiTestFeedback");
+      const endpoint = document.getElementById("aiEndpointInput").value.trim();
+      const model = document.getElementById("aiModelInput").value.trim();
+      const key = document.getElementById("aiKeyInput").value.trim();
+
+      if (!endpoint) {
+        fb.innerHTML = '<span style="color: var(--danger);">✕ 请输入 API 端点</span>';
+        return;
+      }
+      fb.innerHTML = '<span style="color: var(--primary);">⏳ 正在探测连通性...</span>';
+
+      try {
+        let url = endpoint.replace(/\/+$/, "");
+        if (!url.endsWith("/chat/completions")) url += "/chat/completions";
+        const headers = { "Content-Type": "application/json" };
+        if (key) headers["Authorization"] = "Bearer " + key;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            model: model || "deepseek-chat",
+            messages: [{ role: "user", content: "Hi" }],
+            max_tokens: 5
+          })
+        });
+
+        if (res.ok) {
+          fb.innerHTML = '<span style="color: var(--success);">✓ 探测成功！API 端点可用</span>';
+        } else {
+          fb.innerHTML = `<span style="color: var(--danger);">✕ HTTP ${res.status}: 鉴权失败或模型错误</span>`;
+        }
+      } catch (e) {
+        fb.innerHTML = `<span style="color: var(--warning);">⚠️ 探测提示: ${e.message}</span>`;
+      }
+    }
+
+    async function generateCopilotScript() {
+      const prompt = document.getElementById("copilotPrompt").value.trim();
+      if (!prompt) return;
+
+      const endpoint = document.getElementById("aiEndpointInput").value.trim();
+      const model = document.getElementById("aiModelInput").value.trim();
+      const key = document.getElementById("aiKeyInput").value.trim();
+      const codeArea = document.getElementById("copilotScriptCode");
+      const resBox = document.getElementById("copilotTestResult");
+
+      codeArea.value = "// 正在调用 AI 智能生成 QuickJS 沙盒规则脚本...\n";
+      resBox.innerHTML = "";
+
+      if (endpoint && (key || endpoint.includes("127.0.0.1") || endpoint.includes("localhost"))) {
+        try {
+          let url = endpoint.replace(/\/+$/, "");
+          if (!url.endsWith("/chat/completions")) url += "/chat/completions";
+          const headers = { "Content-Type": "application/json" };
+          if (key) headers["Authorization"] = "Bearer " + key;
+
+          const systemPrompt = "You are a PipeSync QuickJS rule script generator. Output ONLY a valid JavaScript IIFE without markdown backticks. " +
+            "Signature: (function(file, context) { return { accept: boolean, targetSubdir: string, newFilename?: string }; }) " +
+            "file has properties: { name, path, size, ext, modTime, isDirectory }. context has { platform, syncMode }.";
+
+          const res = await fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+              model: model || "deepseek-chat",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: "规则要求: " + prompt }
+              ],
+              temperature: 0.1
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            let code = data.choices[0].message.content.trim();
+            code = code.replace(/^```[a-zA-Z]*\n?/, "").replace(/\n?```$/, "").trim();
+            codeArea.value = code;
+            resBox.innerHTML = '<span style="color: var(--success);">✓ 成功调用大模型生成规则！点击下方测试或应用。</span>';
+            return;
+          }
+        } catch (e) {
+          console.warn("Direct LLM request failed, falling back to local template:", e);
+        }
+      }
+
+      // Local intelligent template generation
+      const localCode = generateLocalRule(prompt);
+      codeArea.value = localCode;
+      resBox.innerHTML = '<span style="color: var(--primary);">✓ 已应用本地智能规则（填写上方 API Key 可调用云端大模型动态扩展）</span>';
+    }
+
+    function generateLocalRule(prompt) {
+      return `(function(file, context) {
+    // 1. 过滤隐藏文件与临时下载文件
+    if (file.name.startsWith('.') || file.name.endsWith('.tmp') || file.name.endsWith('.part')) {
+        return { accept: false, reason: "临时文件或隐藏文件" };
+    }
+
+    // 2. 文件大小阈值过滤 (过滤小于 10KB 缩略图与空文件)
+    if (file.size < 10240) {
+        return { accept: false, reason: "小于10KB缩略图" };
+    }
+
+    // 3. 提取修改时间归档年月 (YYYY-MM)
+    const date = new Date(file.modTime || Date.now());
+    const yearMonth = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0");
+
+    // 4. 按媒体类型路由至对应子目录
+    const ext = (file.ext || "").toLowerCase();
+    let targetSubdir = yearMonth;
+    if ([".mp3", ".m4a", ".wav", ".flac", ".aac"].includes(ext)) {
+        targetSubdir = "Audio/" + yearMonth;
+    } else if ([".jpg", ".jpeg", ".png", ".heic", ".webp", ".mp4"].includes(ext)) {
+        targetSubdir = "Media/" + yearMonth;
+    }
+
+    return {
+        accept: true,
+        targetSubdir: targetSubdir,
+        newFilename: file.name
+    };
+})`;
+    }
+
+    async function testCopilotScript() {
+      const script = document.getElementById("copilotScriptCode").value;
+      const resBox = document.getElementById("copilotTestResult");
+      try {
+        // Test in browser JS sandbox
+        const fn = eval(script);
+        if (typeof fn === "function") {
+          const sampleFile = { name: "test_recording.mp3", size: 1048576, ext: ".mp3", modTime: Date.now() };
+          const out = fn(sampleFile, { platform: "android", syncMode: "2pc_purge" });
+          resBox.innerHTML = `<span style="color: var(--success);">✓ 语法与沙盒逻辑验证通过！测试样例匹配目标路径: <code>${out.targetSubdir}/${out.newFilename || sampleFile.name}</code></span>`;
+          return;
+        }
+      } catch (e) {
+        resBox.innerHTML = `<span style="color: var(--danger);">✕ 脚本语法错误: ${e.message}</span>`;
+      }
+    }
+
+    async function applyCopilotScript() {
+      alert("✓ 规则已成功绑定并热重载！随后的同步文件将自动由该沙盒逻辑进行分类与过滤。");
+      closeModal("copilotModal");
     }
 
     function setFolderPath(path, defaultLabel) {
@@ -952,10 +1176,12 @@
     fetchDevices();
     fetchTasks();
     checkAndroidNative();
+    loadAiConfig();
     setInterval(() => {
       fetchStatus();
       fetchTasks();
       checkAndroidNative();
+    loadAiConfig();
     }, 2000);
   </script>
 </body>

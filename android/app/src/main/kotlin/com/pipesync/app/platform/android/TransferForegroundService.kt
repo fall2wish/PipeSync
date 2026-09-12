@@ -90,29 +90,31 @@ class TransferForegroundService : Service() {
         val notification = notificationBuilder
             .setContentTitle("PipeSync 数据管道正在运行")
             .setContentText("2PC 强一致性传输引擎与 WebKit 守护进程活跃中")
-            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setSmallIcon(com.pipesync.app.R.drawable.ic_pipesync_logo)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(
                     NOTIFICATION_ID,
                     notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
                 )
             } else {
-                startForeground(
-                    NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                )
+                startForeground(NOTIFICATION_ID, notification)
             }
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+            Log.i(TAG, "Foreground notification started with type DATA_SYNC.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to startForeground with DATA_SYNC: ${e.message}", e)
+            try {
+                // Fallback to normal foreground without type
+                startForeground(NOTIFICATION_ID, notification)
+            } catch (fallbackEx: Exception) {
+                Log.e(TAG, "Fallback startForeground failed: ${fallbackEx.message}", fallbackEx)
+            }
         }
-        Log.i(TAG, "Foreground notification started with type DATA_SYNC.")
     }
 
     private fun acquireLocks() {

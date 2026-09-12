@@ -1,6 +1,9 @@
 <resources>
-    <!-- Base application theme. -->
-    <style name="Theme.PipeSync" parent="android:Theme.Material.NoActionBar">
+    <!-- Base application theme conforming to AppCompatActivity -->
+    <style name="Theme.PipeSync" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/bg_dark</item>
+        <item name="colorAccent">@color/accent</item>
         <item name="android:colorPrimary">@color/primary</item>
         <item name="android:colorPrimaryDark">@color/bg_dark</item>
         <item name="android:colorAccent">@color/accent</item>

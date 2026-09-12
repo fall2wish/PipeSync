@@ -44,8 +44,12 @@ class MainActivity : AppCompatActivity() {
         errorView = findViewById(R.id.errorView)
         btnRetry = findViewById(R.id.btnRetry)
 
-        // 1. 启动 Android 14/15 dataSync 前台保活服务
-        TransferForegroundService.start(this)
+        // 1. 启动 Android 14/15 dataSync 前台保活服务 (带容错兜底)
+        try {
+            TransferForegroundService.start(this)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to start TransferForegroundService: ${e.message}", e)
+        }
 
         // 2. 初始化并配置内嵌 WebKit
         setupWebView()

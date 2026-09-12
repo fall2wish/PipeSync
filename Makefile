@@ -71,3 +71,12 @@ clean:
 	@echo "[*] Cleaning build artifacts..."
 	rm -f $(SO_TARGET) $(QJS_TARGET) $(TEST_BIN) $(BIN_TARGET)
 	rm -rf __pycache__ */__pycache__ /tmp/pipesync*
+
+act-test:
+	@echo "[*] Running CI test job locally via act..."
+	act -j build-and-test
+
+act-android:
+	@echo "[*] Running Android APK & Linux build job locally via act..."
+	act -j build-android-and-linux
+

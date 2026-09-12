@@ -1,0 +1,4 @@
+# act configuration for local GitHub Actions execution
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+-P ubuntu-22.04=catthehacker/ubuntu:act-22.04
+--container-options "--memory 8g"
